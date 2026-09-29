@@ -1,0 +1,59 @@
+name: review
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+concurrency:
+  group: review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR AUTHOR: ${{ github.event.pull_request.user.login }}
+            BASE: origin/${{ github.base_ref }}
+
+            You are the merge gate for this repository. `AGENTS.md` is the team's binding rulebook: read it in full first, then review this PR against it.
+            Get the diff with `gh pr diff`, and read any file in the repo you need for context (callers, the modules this PR imports from, tests).
+
+            BLOCK the PR only for:
+            - a bug that makes the changed code wrong (not style)
+            - leakage: a feature, prediction or backtest step for Gameweek t using information from after the Gameweek t deadline
+            - an interface change (renamed/changed public function, argument, return type or DataFrame column that another module imports) without a matching new entry in `mimi/decisions.md`
+            - non-trivial new logic (algorithm, branching, data transformation, FPL rule) with no test, or a test deleted, skipped or weakened
+            - committed secrets, credentials, data files, model binaries or `.venv/`
+            - `pip install`, `requirements.txt` or conda instead of uv; `mimi/` added to an ignore file
+            - an FPL rule value hard-coded deep in logic instead of configurable; a random process without an explicit seed
+            - reusable logic that lives only in a notebook
+
+            Do NOT block for style, naming, missing docstrings, or anything CI already checks (tests passing, file ownership).
+
+            Post each concrete problem as an inline comment on the line it concerns, saying what is wrong and what to do instead.
+            Then post one summary comment with `gh pr comment` starting with `**Review: APPROVE**` or `**Review: BLOCK**`, followed by the blocking issues (or "none") and at most 3 optional suggestions.
+            Be terse. Do not praise.
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*)"
+            --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["approve","block"]},"blocking_issues":{"type":"array","items":{"type":"string"}}},"required":["verdict","blocking_issues"]}'
+      - name: Fail when the review blocks
+        env:
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          echo "$RESULT"
+          test "$(echo "$RESULT" | jq -r .verdict)" = approve
