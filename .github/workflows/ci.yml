@@ -1,0 +1,18 @@
+name: ci
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync --locked
+      - run: uv run pytest
+      - name: PR only touches paths its author owns
+        run: uv run python scripts/check_owners.py "${{ github.event.pull_request.user.login }}" "origin/${{ github.base_ref }}"
+      - name: mimi memory is not git-ignored
+        run: test ! -e mimi/.gitignore

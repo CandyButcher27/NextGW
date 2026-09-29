@@ -1,0 +1,33 @@
+*                           @CandyButcher27
+
+/data/                      @Harsh1331
+/tests/test_data_*          @Harsh1331
+/prediction/                @djahnavi180506
+/tests/test_prediction_*    @djahnavi180506
+/uncertainty/               @hritikshukla144
+/tests/test_uncertainty_*   @hritikshukla144
+/fpl/                       @TarunPK15
+/tests/test_fpl_*           @TarunPK15
+/planning/                  @Vidhan-J28
+/tests/test_planning_*      @Vidhan-J28
+/baselines/                 @TA619
+/backtesting/__init__.py    @TA619 @print-tanish
+/backtesting/simulator.py   @TA619
+/backtesting/experiments.py @TA619
+/tests/test_baselines_*     @TA619
+/tests/test_backtesting_*   @TA619
+/backtesting/metrics.py     @print-tanish
+/tests/test_metrics_*       @print-tanish
+
+/notebooks/Harsh1331_*       @Harsh1331
+/notebooks/djahnavi180506_*  @djahnavi180506
+/notebooks/hritikshukla144_* @hritikshukla144
+/notebooks/TarunPK15_*       @TarunPK15
+/notebooks/Vidhan-J28_*      @Vidhan-J28
+/notebooks/TA619_*           @TA619
+/notebooks/print-tanish_*    @print-tanish
+/notebooks/CandyButcher27_*  @CandyButcher27
+
+/mimi/          @CandyButcher27 @Harsh1331 @djahnavi180506 @hritikshukla144 @TarunPK15 @Vidhan-J28 @TA619 @print-tanish
+/pyproject.toml @CandyButcher27 @Harsh1331 @djahnavi180506 @hritikshukla144 @TarunPK15 @Vidhan-J28 @TA619 @print-tanish
+/uv.lock        @CandyButcher27 @Harsh1331 @djahnavi180506 @hritikshukla144 @TarunPK15 @Vidhan-J28 @TA619 @print-tanish
