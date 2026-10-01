@@ -77,3 +77,56 @@ def test_verify_no_future_leakage_catches_future_rows():
     ])
     with pytest.raises(ValueError, match="Temporal leakage detected"):
         verify_no_future_leakage(bad_features, target_season="2023-24", target_gameweek=3)
+
+
+def test_verify_no_future_leakage_catches_target_gw_raw_outcomes():
+    bad_features = pd.DataFrame([
+        {"season": "2023-24", "gameweek": 3, "player_id": 1, "total_points": 10, "minutes": 90},
+    ])
+    with pytest.raises(ValueError, match="Target gameweek outcome leakage detected"):
+        verify_no_future_leakage(bad_features, target_season="2023-24", target_gameweek=3)
+
+
+def test_verify_no_future_leakage_allows_exempted_target():
+    # In training, total_points may be present as the target label y
+    features = pd.DataFrame([
+        {
+            "season": "2023-24",
+            "gameweek": 3,
+            "player_id": 1,
+            "total_points": 10,
+            "total_points_lag_1": 6.0,
+        },
+    ])
+    # Should succeed with exemption
+    verify_no_future_leakage(
+        features,
+        target_season="2023-24",
+        target_gameweek=3,
+        allowed_target_cols=["total_points"],
+    )
+
+    # But still reject if an un-exempted outcome column like minutes is present
+    features_with_minutes = features.assign(minutes=90)
+    with pytest.raises(ValueError, match="Target gameweek outcome leakage detected"):
+        verify_no_future_leakage(
+            features_with_minutes,
+            target_season="2023-24",
+            target_gameweek=3,
+            allowed_target_cols=["total_points"],
+        )
+
+
+def test_verify_no_future_leakage_passes_on_pure_lag_features():
+    clean_features = pd.DataFrame([
+        {
+            "season": "2023-24",
+            "gameweek": 3,
+            "player_id": 1,
+            "total_points_lag_1": 4.0,
+            "minutes_lag_1": 90.0,
+            "price": 14.0,
+        },
+    ])
+    # Should pass without error since only lagged metrics and pre-match price are present
+    verify_no_future_leakage(clean_features, target_season="2023-24", target_gameweek=3)

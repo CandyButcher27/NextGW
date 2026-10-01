@@ -54,6 +54,7 @@ def verify_no_future_leakage(
     target_season: str,
     target_gameweek: int,
     forbidden_outcome_cols: list[str] | None = None,
+    allowed_target_cols: list[str] | None = None,
 ) -> None:
     """Verify that a feature table for predicting a gameweek does not contain unshifted outcomes.
 
@@ -67,16 +68,20 @@ def verify_no_future_leakage(
         Target gameweek being predicted.
     forbidden_outcome_cols : list[str] | None
         List of column names representing match outcomes that cannot be present as features.
+        Defaults to PERFORMANCE_COLUMNS.
+    allowed_target_cols : list[str] | None
+        Optional list of outcome columns explicitly permitted as prediction targets (e.g. ['total_points']).
 
     Raises
     ------
     ValueError
-        If unshifted outcome columns are present or future gameweek data is detected.
+        If unshifted outcome columns are present for the target gameweek or future gameweek data is detected.
     """
     if feature_df.empty:
         return
 
     cols_to_check = forbidden_outcome_cols if forbidden_outcome_cols is not None else PERFORMANCE_COLUMNS
+    allowed = set(allowed_target_cols or [])
 
     # Check for any row in feature_df that has gameweek > target_gameweek in target_season
     future_rows = (feature_df["season"] == target_season) & (feature_df["gameweek"] > target_gameweek)
@@ -87,15 +92,18 @@ def verify_no_future_leakage(
             f"from future gameweeks (> {target_gameweek}) in season {target_season}."
         )
 
-    # Check if target gameweek rows directly contain non-shifted match outcome columns
+    # Check if target gameweek rows directly contain unshifted match outcome columns
     target_rows = (feature_df["season"] == target_season) & (feature_df["gameweek"] == target_gameweek)
     if target_rows.any():
-        for col in cols_to_check:
-            # If the exact outcome column name is present in target rows and not explicitly a lagged feature
-            if col in feature_df.columns and not col.startswith("lag_") and not col.startswith("roll_"):
-                # Having the raw target outcome column present alongside features for prediction is dangerous
-                # unless explicitly designated as the training target 'y'
-                pass
+        leaked_cols = [
+            col for col in cols_to_check
+            if col in feature_df.columns and col not in allowed
+        ]
+        if leaked_cols:
+            raise ValueError(
+                f"Target gameweek outcome leakage detected: feature table contains unshifted "
+                f"outcome columns {leaked_cols} for target gameweek {target_gameweek} in season {target_season}."
+            )
 
 
 def compute_leakage_safe_lags(
