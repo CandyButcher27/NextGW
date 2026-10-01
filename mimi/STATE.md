@@ -11,17 +11,20 @@ nothing deployed; course project, demo track. Repo workflow (CI, Claude review, 
 
 ## Open threads
 - Collaborator invites pending (7 members), expected accepted 2026-10-01
-- Module interfaces for prediction, uncertainty, fpl, planning, backtesting pending stubs from respective owners
+- Module interfaces not yet agreed (planning doc checklist: agree all interfaces before integration)
 - Unconfirmed: GitHub username mapping djahnavi180506 = Jhavi Dasari, TA619 = Triyansh Agarwaal (used in AGENTS.md and .github/CODEOWNERS)
+- Planning doc says "Planner API from Aryaman"; AGENTS.md gives planning/ to Vidhan Jain. Not yet confirmed with the team
 
 ## Next 3
-1. Tarun: FPL rules spec as constraints in fpl/
-2. Jhavi: ML prediction model and feature pipeline consuming data module
-3. Vidhan: Planning state, actions and search stubs
+1. Each owner opens a PR with the public function signatures of their module (stubs only); record agreed interfaces in mimi/decisions.md
+2. Harsh: data sources + clean player-GW dataset schema
+3. Tarun: FPL rules spec as constraints in fpl/
 
-## Last session (2026-10-01)
-Branch: Harsh1331/raw-ingest
-Completed: Data Engineering module implemented in data/ (schema validation, leakage prevention & shifted lags, raw ingestion with deterministic synthetic generation, DGW aggregation pipeline) and test suite in tests/test_data_*. Recorded DEC-HG-1.
-Resume with: Open PR for Harsh1331/raw-ingest and hand off schema to Jhavi and Tarun.
+## Last session (2026-09-30)
+Branch: main
+Uncommitted: mimi/ memory updates only
+Stopped at: repo setup done (scaffold, AGENTS.md rulebook, CODEOWNERS ownership CI, Claude review gate, protection, README, About); team onboarding next
+Tried, failed: `astral-sh/setup-uv@v10` (no floating major tag, see ISS-AS-1)
+Resume with: `gh api repos/CandyButcher27/NextGW/collaborators --jq '.[].login'` to confirm invites accepted, then send the team onboarding message
 
-Last updated: 2026-10-01
+Last updated: 2026-09-30
