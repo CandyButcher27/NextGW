@@ -36,3 +36,9 @@ Why: prediction, fpl, and backtesting need a standardized, leakage-safe player-g
 Rejected: unaggregated fixture-level rows without GW rollup; silent fallback to synthetic data when raw files missing.
 Reverse if: downstream models require within-GW sequential match forecasting.
 Date: 2026-10-01
+
+## DEC-AS-5 — PRs merge themselves: author arms auto-merge, nobody merges by hand
+Why: Aryaman wants the workflow hands-off and does not want to watch PRs (told 2026-10-02). PR #6 sat green until someone merged it. Repo auto-merge was enabled and AGENTS.md section 6 now requires `gh pr merge --auto --squash` right after `gh pr create` (PR #7).
+Rejected: require 1 approval from CandyButcher27 so only he merges — puts him back in the loop on every PR. Restricting who may merge — not available on a user-owned repo.
+Reverse if: a PR merges that should not have, because the Claude review approved something wrong.
+Date: 2026-10-02
