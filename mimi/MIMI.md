@@ -7,7 +7,7 @@ Check this before grepping the repo. Everything mimi keeps is in `mimi/`, and th
 ### Where to look
 - Something broke, or a symptom looks familiar → `mimi/ISSUES.md` (search the exact error text)
 - About to change an existing choice (library, schema, provider, architecture) → `mimi/decisions.md`
-- Touching an external system (API, database, deploy, credentials) → `mimi/memory/external.md` — contains: Why can't I push to main / why is my PR not mergeable (GitHub branch protection); Claude PR review: whose credentials, what it costs; Collaborators and GitHub usernames
+- Touching an external system (API, database, deploy, credentials) → `mimi/memory/external.md` — contains: Why can't I push to main / why is my PR not mergeable (GitHub branch protection); Why did nobody tell me my PR is stuck (failed checks, no reminders); Claude PR review: whose credentials, what it costs; Collaborators and GitHub usernames
 
 Every file in `mimi/memory/` gets one line above saying when to read it. A file with no line is never read. `index` appends each file's `##` headings to its line, so a task can match a trap by name, and marks a file that holds nothing yet as `— empty`: skip those.
 
