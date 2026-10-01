@@ -30,3 +30,9 @@ Why: Aryaman chose to instruct members directly (told 2026-09-30).
 Rejected: AGENTS.md rule "run mimi-close before every push/PR" — offered, declined.
 Reverse if: mimi/STATE.md goes stale because members forget.
 Date: 2026-09-30
+
+## DEC-HG-1 — Data Engineering public interface and player-GW schema
+Why: prediction, fpl, and backtesting need a standardized, leakage-safe player-gameweek dataset. Standardized functions: `load_clean_player_gw_data(season, processed_dir, raw_dir)`, `clean_raw_merged_gw(raw_df, season)`, `validate_player_gameweek_df(df)`, `compute_leakage_safe_lags(df, stat_cols, lags, rolling_windows)`, `get_pre_deadline_history(df, season, gw)`. Schema includes identifiers (season, gameweek, player_id, player_name, web_name), metadata (team, team_id, position, element_type, price in £m), fixture details (opponent_team, opponent_team_id, was_home, kickoff_time, matches_in_gw), and ground-truth performance stats. Double Gameweeks are aggregated to single GW records with matches_in_gw count.
+Rejected: unaggregated fixture-level rows without GW rollup — complicates multi-gameweek transfer and lineup planning across downstream modules.
+Reverse if: downstream models require within-GW sequential match forecasting.
+Date: 2026-10-01
