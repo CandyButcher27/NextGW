@@ -7,6 +7,7 @@ import pytest
 from data.pipeline import (
     clean_raw_merged_gw,
     load_clean_player_gw_data,
+    load_synthetic_player_gw_data,
     process_and_save_season,
 )
 from data.schema import validate_player_gameweek_df
@@ -161,3 +162,55 @@ def test_end_to_end_pipeline_reproducible(tmp_path: Path):
     # Verify loaded dataset passes schema
     val = validate_player_gameweek_df(df1)
     assert val.is_valid
+
+
+def test_missing_raw_data_raises_filenotfound(tmp_path: Path):
+    empty_raw = tmp_path / "raw"
+    empty_proc = tmp_path / "processed"
+    with pytest.raises(FileNotFoundError, match="Raw data file not found"):
+        process_and_save_season(
+            season="2023-24",
+            raw_dir=empty_raw,
+            processed_dir=empty_proc,
+            allow_synthetic=False,
+            auto_fetch=False,
+        )
+
+    with pytest.raises(FileNotFoundError):
+        load_clean_player_gw_data(
+            season="2023-24",
+            raw_dir=empty_raw,
+            processed_dir=empty_proc,
+            allow_synthetic=False,
+            auto_fetch=False,
+        )
+
+
+def test_missing_raw_data_with_allow_synthetic_opt_in(tmp_path: Path):
+    empty_raw = tmp_path / "raw"
+    empty_proc = tmp_path / "processed"
+    # When explicitly opted in, generates synthetic data
+    out_path = process_and_save_season(
+        season="2023-24",
+        raw_dir=empty_raw,
+        processed_dir=empty_proc,
+        allow_synthetic=True,
+    )
+    assert out_path.exists()
+    df = pd.read_csv(out_path)
+    assert validate_player_gameweek_df(df).is_valid
+
+
+def test_load_synthetic_player_gw_data_explicit(tmp_path: Path):
+    empty_raw = tmp_path / "raw"
+    empty_proc = tmp_path / "processed"
+    df = load_synthetic_player_gw_data(
+        season="2023-24",
+        raw_dir=empty_raw,
+        processed_dir=empty_proc,
+        num_players=8,
+        num_gws=3,
+        seed=99,
+    )
+    assert len(df) == 8 * 3
+    assert validate_player_gameweek_df(df).is_valid

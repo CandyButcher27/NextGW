@@ -12,7 +12,10 @@ from data.schema import (
     POSITION_NAME_TO_ID,
     validate_player_gameweek_df,
 )
-from data.ingestion.fetch import generate_synthetic_raw_data
+from data.ingestion.fetch import (
+    fetch_github_season_merged_gw,
+    generate_synthetic_raw_data,
+)
 
 
 def clean_raw_merged_gw(raw_df: pd.DataFrame, season: str) -> pd.DataFrame:
@@ -172,6 +175,8 @@ def process_and_save_season(
     season: str,
     raw_dir: Path | str = "data/raw",
     processed_dir: Path | str = "data/processed",
+    allow_synthetic: bool = False,
+    auto_fetch: bool = True,
 ) -> Path:
     """Read raw season merged_gw.csv, clean it, and save to data/processed.
 
@@ -183,16 +188,40 @@ def process_and_save_season(
         Path containing raw files.
     processed_dir : Path | str
         Path to save processed files.
+    allow_synthetic : bool
+        If True and raw file is missing, generates synthetic data for testing.
+        Defaults to False to prevent accidental training or evaluation on mock data.
+    auto_fetch : bool
+        If True and raw file is missing (with allow_synthetic=False), attempts
+        to download merged_gw.csv from GitHub. Defaults to True.
 
     Returns
     -------
     Path
         Path to the saved processed CSV file.
+
+    Raises
+    ------
+    FileNotFoundError
+        If raw file does not exist and allow_synthetic=False and auto-fetch fails or is disabled.
     """
     raw_path = Path(raw_dir) / season / "merged_gw.csv"
     if not raw_path.exists():
-        # Generate synthetic fallback deterministically if raw data does not exist
-        generate_synthetic_raw_data(season=season, raw_base_dir=raw_dir)
+        if allow_synthetic:
+            generate_synthetic_raw_data(season=season, raw_base_dir=raw_dir)
+        elif auto_fetch:
+            try:
+                fetch_github_season_merged_gw(season=season, raw_base_dir=raw_dir)
+            except Exception as exc:
+                raise FileNotFoundError(
+                    f"Raw data file not found at {raw_path} and auto-fetch from GitHub failed: {exc}. "
+                    f"For testing with synthetic data, pass allow_synthetic=True explicitly."
+                ) from exc
+        else:
+            raise FileNotFoundError(
+                f"Raw data file not found at {raw_path}. Run fetch_github_season_merged_gw('{season}') "
+                f"or set allow_synthetic=True for testing."
+            )
 
     raw_df = pd.read_csv(raw_path)
     clean_df = clean_raw_merged_gw(raw_df, season=season)
@@ -208,6 +237,8 @@ def load_clean_player_gw_data(
     season: str,
     processed_dir: Path | str = "data/processed",
     raw_dir: Path | str = "data/raw",
+    allow_synthetic: bool = False,
+    auto_fetch: bool = True,
 ) -> pd.DataFrame:
     """Load cleaned player-gameweek dataset, processing from raw if needed.
 
@@ -219,14 +250,59 @@ def load_clean_player_gw_data(
         Path to processed directory.
     raw_dir : Path | str
         Path to raw directory.
+    allow_synthetic : bool
+        If True and raw data is missing, permits synthetic generation.
+        Defaults to False to protect downstream models from synthetic data.
+    auto_fetch : bool
+        If True and raw data is missing, attempts to fetch from GitHub.
+        Defaults to True.
 
     Returns
     -------
     pd.DataFrame
         Clean, validated DataFrame.
+
+    Raises
+    ------
+    FileNotFoundError
+        If raw or processed data is unavailable and allow_synthetic=False.
     """
     proc_path = Path(processed_dir) / f"players_gw_{season}.csv"
     if not proc_path.exists():
-        process_and_save_season(season=season, raw_dir=raw_dir, processed_dir=processed_dir)
+        process_and_save_season(
+            season=season,
+            raw_dir=raw_dir,
+            processed_dir=processed_dir,
+            allow_synthetic=allow_synthetic,
+            auto_fetch=auto_fetch,
+        )
 
     return pd.read_csv(proc_path)
+
+
+def load_synthetic_player_gw_data(
+    season: str = "2023-24",
+    processed_dir: Path | str = "data/processed",
+    raw_dir: Path | str = "data/raw",
+    num_players: int = 40,
+    num_gws: int = 38,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Generate and load synthetic player-gameweek data explicitly for testing/benchmarks.
+
+    Synthetic data is explicitly opt-in and does not masquerade as real data without intention.
+    """
+    generate_synthetic_raw_data(
+        season=season,
+        raw_base_dir=raw_dir,
+        num_players=num_players,
+        num_gws=num_gws,
+        seed=seed,
+    )
+    process_and_save_season(
+        season=season,
+        raw_dir=raw_dir,
+        processed_dir=processed_dir,
+        allow_synthetic=True,
+    )
+    return pd.read_csv(Path(processed_dir) / f"players_gw_{season}.csv")

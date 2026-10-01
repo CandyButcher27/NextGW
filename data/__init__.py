@@ -24,6 +24,7 @@ from data.leakage import (
 from data.pipeline import (
     clean_raw_merged_gw,
     load_clean_player_gw_data,
+    load_synthetic_player_gw_data,
     process_and_save_season,
 )
 from data.ingestion.fetch import (
@@ -51,6 +52,7 @@ __all__ = [
     "generate_synthetic_raw_data",
     "get_pre_deadline_history",
     "load_clean_player_gw_data",
+    "load_synthetic_player_gw_data",
     "process_and_save_season",
     "validate_player_gameweek_df",
     "verify_no_future_leakage",
