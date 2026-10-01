@@ -59,7 +59,11 @@ Shared by everyone: `mimi/`, `pyproject.toml`, `uv.lock`, `notebooks/<github-use
 - Commits are small, one logical change each, with a conventional prefix: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`. Subject ≤ 50 chars, imperative.
 - Before opening a PR, and again before merging: `git merge main`, `uv run pytest` passes, push.
 - PR into `main`: title in conventional-commit form; body says what changed, why, and how it was tested. Keep PRs small and merge within a few days; long-lived branches cause the conflicts.
-- PRs are squash-merged. `main` is protected: it needs a PR and a green CI run, and the branch must be up to date with `main`.
+- PRs are squash-merged. `main` is protected: it needs a PR, a green `ci` check and a green `review` check, and the branch must be up to date with `main`.
+- Right after `gh pr create`, you MUST run `gh pr merge --auto --squash`. GitHub then merges the PR by itself once `ci` and `review` are green. Nobody approves or merges by hand; do not wait for `CandyButcher27`.
+- `review` is an automated Claude review. If it fails, run `gh pr view --comments`, read the comment starting `**Review: BLOCK**`, fix every blocking issue on the same branch and push. Both checks re-run on every push. NEVER close the PR and open a new one to get a fresh review.
+- If `ci` fails, run `gh pr checks` and `gh run view --log-failed`, fix and push.
+- Before ending the session, run `gh pr checks --watch` and stay until the PR is merged or you have told the user exactly what blocks it.
 
 ## 7. Conflicts
 - `uv.lock`: `git checkout --theirs uv.lock && uv lock` (during `git merge main`), then commit.
@@ -72,8 +76,8 @@ Shared by everyone: `mimi/`, `pyproject.toml`, `uv.lock`, `notebooks/<github-use
 ## 8. Session end — MUST run before the user stops
 1. Run the `mimi-close` skill (the user may say "mimi close").
 2. If `mimi/.gitignore` or `mimi/.ignore` exists, delete both. mimi's `init` recreates them; left in place, new memory files silently stop being shared.
-3. Commit your code and the `mimi/` changes on your branch, push, and open or update the PR.
-4. Tell the user the PR link and anything they must tell another owner.
+3. Commit your code and the `mimi/` changes on your branch, push, and open or update the PR. Arm auto-merge and see it through (section 6).
+4. Tell the user the PR link, whether it merged, and anything they must tell another owner.
 
 ## 9. Never
 - Edit files outside the user's ownership (section 3).
