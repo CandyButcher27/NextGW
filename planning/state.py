@@ -5,13 +5,13 @@ from typing import Set, Dict
 class PlanningState:
     """
     Represents the full state of an FPL team at a specific Gameweek.
-    Frozen to ensure it can be used as a key in search algorithms (e.g. for memoization).
+    Frozen to ensure it can be used as a key in search algorithms. Squad is stored as a sorted tuple of (PlayerID, Position) for hashability.
     """
     gameweek: int
-    squad: Dict[str, str]  # PlayerID -> Position (e.g., "GK", "DEF", "MID", "FWD")
+    squad: tuple  # PlayerID -> Position (e.g., "GK", "DEF", "MID", "FWD")
     budget: float
     free_transfers: int
-    chips_used: Set[str] = field(default_factory=set)
+    chips_used: frozenset = field(default_factory=frozenset)
     
     def __repr__(self):
         return f"State(GW={self.gameweek}, Budget={self.budget}, FT={self.free_transfers})"
