@@ -37,6 +37,25 @@ Rejected: unaggregated fixture-level rows without GW rollup; silent fallback to 
 Reverse if: downstream models require within-GW sequential match forecasting.
 Date: 2026-10-01
 
+## DEC-JD-1 — PROPOSED — pending consumer sign-off: prediction API and uncertainty output
+Status: PROPOSED — pending consumer sign-off from planning and other consumers.
+API:
+- `Predictor.load(path)` loads the predictor artifact.
+- `predict_player_gw(player_id, gameweek)` returns one forecast with `pred_mean`, `pred_std`, and `quantiles`.
+- `predict_horizon(season, as_of_gw, horizon=4)` returns forecasts for each available player across the requested upcoming Gameweeks.
+Uncertainty output:
+- Each forecast contains `pred_mean` (expected FPL points), `pred_std`, `quantiles`, and `uncertainty_status`.
+- `pred_std` and `quantiles` use out-of-sample chronological residuals for the player's position when at least 30 calibration residuals are available for that position.
+- `quantiles` contains empirical residual-adjusted `p10`, `p25`, `p50`, `p75`, and `p90` values, clipped to zero. The quantiles remain nested under the `quantiles` field as specified by this proposed contract.
+- If a position has fewer than 30 residuals, both `pred_std` and `quantiles` fall back to the pooled out-of-sample calibration residuals. If fewer than two pooled residuals exist, `pred_std` is `None`, `quantiles` is empty, and `uncertainty_status` is `UNAVAILABLE — insufficient calibration residuals`.
+- With position-specific calibration, `uncertainty_status` is `PROVISIONAL — position calibration for {POSITION}; coverage has not been measured`; with pooled fallback it is `PROVISIONAL — pooled_fallback calibration for {POSITION}; coverage has not been measured`.
+- These intervals are PROVISIONAL; coverage has not been measured.
+- Calibration residuals come from the latest training season, scored by a model trained on earlier seasons. The final chronological holdout is excluded from model fitting and calibration.
+Why: The planner needs a stable way to load a trained predictor and request point forecasts and uncertainty without invoking training code. This contract gives a basic uncertainty output while keeping its current calibration limits visible.
+Rejected: Treating the interface or intervals as approved/calibrated — consumer owners have not signed off and predictive coverage has not been evaluated.
+Reverse if: Consumer owners agree a different signature, return shape, or uncertainty representation.
+Date: 2026-10-02
+
 ## DEC-AS-5 — PRs merge themselves: author arms auto-merge, nobody merges by hand
 Why: Aryaman wants the workflow hands-off and does not want to watch PRs (told 2026-10-02). PR #6 sat green until someone merged it. Repo auto-merge was enabled and AGENTS.md section 6 now requires `gh pr merge --auto --squash` right after `gh pr create` (PR #7).
 Rejected: require 1 approval from CandyButcher27 so only he merges — puts him back in the loop on every PR. Restricting who may merge — not available on a user-owned repo.
