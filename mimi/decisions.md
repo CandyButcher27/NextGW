@@ -61,3 +61,9 @@ Why: Aryaman wants the workflow hands-off and does not want to watch PRs (told 2
 Rejected: require 1 approval from CandyButcher27 so only he merges — puts him back in the loop on every PR. Restricting who may merge — not available on a user-owned repo.
 Reverse if: a PR merges that should not have, because the Claude review approved something wrong.
 Date: 2026-10-02
+
+## DEC-AS-6 — Session state is per person; mimi/STATE.md is team-level and admin-only
+Why: every mimi-close overwrote the single shared mimi/STATE.md, so every PR conflicted on it, and PR #9 corrupted a teammate's line while rewriting it. Each person now writes only `mimi/state/<github-username>.md`; `mimi/STATE.md` keeps goal, deployment and team threads, written only by CandyButcher27. CODEOWNERS enforces both through the `ci` ownership check.
+Rejected: keep one STATE.md with "edit only your own lines" — tried in AGENTS.md, conflicts and corruption continued. A union merge driver in .gitattributes — silently duplicates or interleaves sections.
+Reverse if: mimi-close gains native per-user state, or the team shrinks to one or two people.
+Date: 2026-10-03
