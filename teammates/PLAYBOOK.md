@@ -26,14 +26,14 @@ gh pr list --author @me --state open
   git pull --ff-only
   git checkout -b <github-username>/<topic>
   ```
-- Then: `uv sync`, and read `mimi/MIMI.md` and `mimi/STATE.md`.
+- Then: `uv sync`, and read `mimi/MIMI.md`, `mimi/STATE.md` and your own `mimi/state/<github-username>.md`.
 
 ## B. While working
 - Touch only the paths listed in your own teammates file plus the shared files (`mimi/`, `pyproject.toml`, `uv.lock`, your own notebooks). Before every commit, run `git status --short` and check every path against that list. A path you do not own → unstage it (`git restore --staged <path>`), revert it (`git restore <path>`), and tell the user who owns it.
 - Name new tests `tests/test_<your-module>_<topic>.py`. Any other name is owned by `CandyButcher27`, and CI fails your PR.
 - Commit small: `uv run pytest`, then `git add <file> <file>` by name, then `git commit -m "feat: ..."`.
 - Push early: `git push -u origin HEAD` the first time, `git push` after that.
-- `mimi/STATE.md`: edit only your own lines. Never rewrite, reformat, or delete another person's line. Copy text exactly; do not retype it (PR #9 corrupted a teammate's line this way).
+- Your session state goes only in `mimi/state/<github-username>.md`. Never edit `mimi/STATE.md` (team-level, `CandyButcher27` only) or another person's state file. When `mimi-close` says to overwrite `mimi/STATE.md`, write your own state file instead.
 
 ## C. Opening the PR — only if `gh pr list --author @me --state open` shows none for this branch
 ```bash
@@ -56,7 +56,7 @@ git status --short                 # lines starting with UU are conflicted files
 Resolve each conflicted file:
 - **Your own file** → open it, keep both sides' intent, remove every `<<<<<<<`, `=======`, `>>>>>>>` marker.
 - **`uv.lock`** → `git checkout --theirs uv.lock && uv lock`
-- **`mimi/STATE.md`** → keep both sides. Keep every other person's lines from `main` exactly as they are, keep your own lines, and write your own `Last session` block.
+- **`mimi/STATE.md` or someone else's `mimi/state/*.md`** → you should not have touched it. Take `main`'s version: `git checkout --theirs <path>`.
 - **`mimi/ISSUES.md`, `mimi/decisions.md`** → keep both sides' entries.
 - **A file someone else owns** → stop. Do not pick a side. Tell the user who owns it.
 
@@ -109,4 +109,4 @@ Follow `AGENTS.md` section 8. Tell the user the PR link, whether it merged, and 
 - Commit on a branch whose PR already merged.
 - Push to `main`, force-push, rebase a pushed branch, or use `--no-verify`.
 - `git add -A` / `git add .` without reading what it stages.
-- Edit another person's files or their lines in `mimi/STATE.md`.
+- Edit another person's files, their `mimi/state/` file, or `mimi/STATE.md`.

@@ -7,7 +7,8 @@ The agent is working for Tanishq. Follow `teammates/PLAYBOOK.md` for every git, 
 - `backtesting/__init__.py` (shared with TA619)
 - `tests/test_metrics_*.py`
 - `notebooks/print-tanish_*.ipynb`
-- shared: `mimi/` (only your own lines in `mimi/STATE.md`), `pyproject.toml`, `uv.lock`
+- `mimi/state/print-tanish.md` (your session state; the only state file you write)
+- shared: `mimi/ISSUES.md`, `mimi/decisions.md`, `mimi/memory/`, `pyproject.toml`, `uv.lock`
 
 Every other path belongs to someone else. If a change is needed there, stop and draft a message the user can send to its owner (`AGENTS.md` section 2 lists owners).
 
