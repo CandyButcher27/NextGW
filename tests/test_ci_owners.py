@@ -13,7 +13,7 @@ def test_module_owner_and_default():
 
 
 def test_shared_paths_allow_everyone():
-    assert violations(RULES, "Harsh1331", ["mimi/STATE.md", "uv.lock", "pyproject.toml", "data/ingestion/fetch.py"]) == []
+    assert violations(RULES, "Harsh1331", ["mimi/state/Harsh1331.md", "mimi/ISSUES.md", "uv.lock", "pyproject.toml", "data/ingestion/fetch.py"]) == []
 
 
 def test_foreign_paths_rejected():
@@ -22,3 +22,11 @@ def test_foreign_paths_rejected():
         "notebooks/TA619_eda.ipynb",
         "AGENTS.md",
     ]
+
+
+def test_state_files_are_personal():
+    assert violations(RULES, "Harsh1331", ["mimi/STATE.md", "mimi/state/Vidhan-J28.md"]) == [
+        "mimi/STATE.md",
+        "mimi/state/Vidhan-J28.md",
+    ]
+    assert violations(RULES, "CandyButcher27", ["mimi/STATE.md", "mimi/state/Harsh1331.md"]) == []
