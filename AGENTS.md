@@ -5,13 +5,18 @@ This file is binding for every agent (Codex, OpenCode, Claude Code, Cursor, anyt
 Project: an FPL planner that searches 4-Gameweek sequences of transfers, starting XI, captain and chips under uncertain player forecasts, and backtests it against a greedy 1-GW strategy and a rule-based strategy. 8 people, each owning one module.
 
 ## 1. Session start — MUST run, in order, before any other work
-1. Identify who you are working for: run `gh api user --jq .login`. That GitHub username is the user.
+1. `git status --short`. If there are uncommitted changes you did not make this session, stop and ask the user what they are.
+2. Identify who you are working for: run `gh api user --jq .login`. That GitHub username is the user.
    - If it fails (gh not installed or not logged in), tell the user to run `gh auth login`, then retry. Do not continue without it.
    - If the current branch is `<other-username>/<topic>` for a different username, stop and ask the user. Never work on another person's branch.
-2. Read `teammates/<github-username>.md` and `teammates/PLAYBOOK.md` in full. Your file lists the only paths you may touch; the playbook gives the exact git, PR, conflict and CI steps. Follow both. If there is no file for that username, stop and ask the user to get one added by `CandyButcher27`.
-3. Run playbook section A: check `git status --short`, fetch, find the user's open PR (`gh pr list --author @me --state open`), and continue on that PR's branch. Create a new branch from fresh `main` only when there is no open PR. On conflict, follow section 7 and playbook section D before anything else.
-4. `uv sync`
-5. Read `mimi/MIMI.md`, `mimi/STATE.md` (the memory block at the bottom of this file) and your own `mimi/state/<github-username>.md`.
+3. Get the latest `main` before reading anything else: `git fetch origin`, then `gh pr list --author @me --state open`.
+   - The user has an open PR → `git checkout <that-branch> && git pull --ff-only && git merge origin/main`. On conflict, follow section 7 before anything else.
+   - No open PR → `git checkout main && git pull --ff-only`.
+4. If step 3 changed `AGENTS.md` (it is listed in the pull or merge output), this file is out of date in your context. Re-read `AGENTS.md` from the top and restart section 1.
+5. Read `teammates/<github-username>.md` and `teammates/PLAYBOOK.md` in full. Your file lists the only paths you may touch; the playbook gives the exact git, PR, conflict and CI steps. Follow both. If there is no file for that username, stop and ask the user to get one added by `CandyButcher27`.
+6. No open PR → create the branch now: `git checkout -b <github-username>/<topic>`.
+7. `uv sync`
+8. Read `mimi/MIMI.md`, `mimi/STATE.md` (the memory block at the bottom of this file) and your own `mimi/state/<github-username>.md`.
 
 ## 2. Who owns what
 The user is the GitHub username from section 1. Never guess it from the branch name or the git author name.
