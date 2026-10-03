@@ -6,7 +6,8 @@ The agent is working for Jhavi Dasari. Follow `teammates/PLAYBOOK.md` for every 
 - `prediction/`
 - `tests/test_prediction_*.py`
 - `notebooks/djahnavi180506_*.ipynb`
-- shared: `mimi/` (only your own lines in `mimi/STATE.md`), `pyproject.toml`, `uv.lock`
+- `mimi/state/djahnavi180506.md` (your session state; the only state file you write)
+- shared: `mimi/ISSUES.md`, `mimi/decisions.md`, `mimi/memory/`, `pyproject.toml`, `uv.lock`
 
 Every other path belongs to someone else. If a change is needed there, stop and draft a message the user can send to its owner (`AGENTS.md` section 2 lists owners).
 
