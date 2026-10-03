@@ -5,15 +5,16 @@ This file is binding for every agent (Codex, OpenCode, Claude Code, Cursor, anyt
 Project: an FPL planner that searches 4-Gameweek sequences of transfers, starting XI, captain and chips under uncertain player forecasts, and backtests it against a greedy 1-GW strategy and a rule-based strategy. 8 people, each owning one module.
 
 ## 1. Session start — MUST run, in order, before any other work
-1. `git status --short`. If there are uncommitted changes you did not make this session, stop and ask the user what they are.
-2. `git fetch origin && git checkout main && git pull --ff-only`
-3. Identify who you are working for (section 2). Switch to their branch: `git checkout <branch>`, or create one: `git checkout -b <github-username>/<topic>`.
-4. `git merge main` into that branch. On conflict, follow section 7 before anything else.
-5. `uv sync`
-6. Read `mimi/MIMI.md` and `mimi/STATE.md` (the memory block at the bottom of this file).
+1. Identify who you are working for: run `gh api user --jq .login`. That GitHub username is the user.
+   - If it fails (gh not installed or not logged in), tell the user to run `gh auth login`, then retry. Do not continue without it.
+   - If the current branch is `<other-username>/<topic>` for a different username, stop and ask the user. Never work on another person's branch.
+2. Read `teammates/<github-username>.md` and `teammates/PLAYBOOK.md` in full. Your file lists the only paths you may touch; the playbook gives the exact git, PR, conflict and CI steps. Follow both. If there is no file for that username, stop and ask the user to get one added by `CandyButcher27`.
+3. Run playbook section A: check `git status --short`, fetch, find the user's open PR (`gh pr list --author @me --state open`), and continue on that PR's branch. Create a new branch from fresh `main` only when there is no open PR. On conflict, follow section 7 and playbook section D before anything else.
+4. `uv sync`
+5. Read `mimi/MIMI.md` and `mimi/STATE.md` (the memory block at the bottom of this file).
 
 ## 2. Who owns what
-Find the user's GitHub username from the current branch prefix (`<github-username>/<topic>`). On `main` or an unknown prefix, ask the user which team member they are. Never guess.
+The user is the GitHub username from section 1. Never guess it from the branch name or the git author name.
 
 | Person | GitHub | Owns |
 |---|---|---|
@@ -27,7 +28,7 @@ Find the user's GitHub username from the current branch prefix (`<github-usernam
 | Aryaman Srivastava | `CandyButcher27` | everything not listed above: `dashboard/`, `configs/`, `scripts/`, `.github/`, top-level pipeline, `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.gitattributes` |
 
 Shared by everyone: `mimi/`, `pyproject.toml`, `uv.lock`, `notebooks/<github-username>_*.ipynb` (your own only).
-`.github/CODEOWNERS` is the machine-readable copy of this table. CI fails any PR that touches a path its author does not own.
+`.github/CODEOWNERS` is the machine-readable copy of this table. CI fails any PR that touches a path its author does not own. `teammates/<github-username>.md` repeats each person's paths with their dependencies and known mistakes.
 
 ## 3. Scope — the rule that prevents most conflicts
 - You MUST only create, edit, rename or delete files the user owns (section 2) plus the shared files.
@@ -61,7 +62,9 @@ Shared by everyone: `mimi/`, `pyproject.toml`, `uv.lock`, `notebooks/<github-use
 - PR into `main`: title in conventional-commit form; body says what changed, why, and how it was tested. Keep PRs small and merge within a few days; long-lived branches cause the conflicts.
 - PRs are squash-merged. `main` is protected: it needs a PR, a green `ci` check and a green `review` check, and the branch must be up to date with `main`.
 - Right after `gh pr create`, you MUST run `gh pr merge --auto --squash`. GitHub then merges the PR by itself once `ci` and `review` are green. Nobody approves or merges by hand; do not wait for `CandyButcher27`.
-- `review` is an automated Claude review. If it fails, run `gh pr view --comments`, read the comment starting `**Review: BLOCK**`, fix every blocking issue on the same branch and push. Both checks re-run on every push. NEVER close the PR and open a new one to get a fresh review.
+- One open PR per topic. NEVER close a PR to open a new one for the same work, for any reason: a blocked review, red CI, or a conflict. Push the fix to the same branch (playbook sections D, F, G).
+- After a PR merges, NEVER commit on that branch again. Delete it and branch from fresh `main` (playbook section E).
+- `review` is an automated Claude review. If it fails, run `gh pr view --comments`, read the comment starting `**Review: BLOCK**`, fix every blocking issue on the same branch and push. Both checks re-run on every push.
 - If `ci` fails, run `gh pr checks` and `gh run view --log-failed`, fix and push.
 - Before ending the session, run `gh pr checks --watch` and stay until the PR is merged or you have told the user exactly what blocks it.
 
