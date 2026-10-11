@@ -26,5 +26,5 @@ A red `ci` or `review` leaves the PR open with no timeout, no auto-close and no 
 - A run that returns no structured verdict fails the check (fail closed).
 
 ## Collaborators and GitHub usernames
-Invites sent 2026-09-30. Accepted as of 2026-10-02 (`write` role): Harsh1331, TarunPK15, Vidhan-J28, TA619, print-tanish. Still pending, cannot push yet: djahnavi180506, hritikshukla144. Owner: CandyButcher27.
+Invites sent 2026-09-30. Accepted as of 2026-10-03 (`write` role): Harsh1331, djahnavi180506, TarunPK15, Vidhan-J28, TA619, print-tanish. Still pending, cannot push yet: hritikshukla144. Owner: CandyButcher27.
 Check with `gh api repos/CandyButcher27/NextGW/invitations --jq '.[].invitee.login'`.

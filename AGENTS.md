@@ -6,14 +6,20 @@ Project: an FPL planner that searches 4-Gameweek sequences of transfers, startin
 
 ## 1. Session start — MUST run, in order, before any other work
 1. `git status --short`. If there are uncommitted changes you did not make this session, stop and ask the user what they are.
-2. `git fetch origin && git checkout main && git pull --ff-only`
-3. Identify who you are working for (section 2). Switch to their branch: `git checkout <branch>`, or create one: `git checkout -b <github-username>/<topic>`.
-4. `git merge main` into that branch. On conflict, follow section 7 before anything else.
-5. `uv sync`
-6. Read `mimi/MIMI.md` and `mimi/STATE.md` (the memory block at the bottom of this file).
+2. Identify who you are working for: run `gh api user --jq .login`. That GitHub username is the user.
+   - If it fails (gh not installed or not logged in), tell the user to run `gh auth login`, then retry. Do not continue without it.
+   - If the current branch is `<other-username>/<topic>` for a different username, stop and ask the user. Never work on another person's branch.
+3. Get the latest `main` before reading anything else: `git fetch origin`, then `gh pr list --author @me --state open`.
+   - The user has an open PR → `git checkout <that-branch> && git pull --ff-only && git merge origin/main`. On conflict, follow section 7 before anything else.
+   - No open PR → `git checkout main && git pull --ff-only`.
+4. If step 3 changed `AGENTS.md` (it is listed in the pull or merge output), this file is out of date in your context. Re-read `AGENTS.md` from the top and restart section 1.
+5. Read `teammates/<github-username>.md` and `teammates/PLAYBOOK.md` in full. Your file lists the only paths you may touch; the playbook gives the exact git, PR, conflict and CI steps. Follow both. If there is no file for that username, stop and ask the user to get one added by `CandyButcher27`.
+6. No open PR → create the branch now: `git checkout -b <github-username>/<topic>`.
+7. `uv sync`
+8. Read `mimi/MIMI.md`, `mimi/STATE.md` (the memory block at the bottom of this file) and your own `mimi/state/<github-username>.md`.
 
 ## 2. Who owns what
-Find the user's GitHub username from the current branch prefix (`<github-username>/<topic>`). On `main` or an unknown prefix, ask the user which team member they are. Never guess.
+The user is the GitHub username from section 1. Never guess it from the branch name or the git author name.
 
 | Person | GitHub | Owns |
 |---|---|---|
@@ -26,8 +32,8 @@ Find the user's GitHub username from the current branch prefix (`<github-usernam
 | Tanishq | `print-tanish` | `backtesting/metrics.py`, `tests/test_metrics_*` |
 | Aryaman Srivastava | `CandyButcher27` | everything not listed above: `dashboard/`, `configs/`, `scripts/`, `.github/`, top-level pipeline, `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.gitattributes` |
 
-Shared by everyone: `mimi/`, `pyproject.toml`, `uv.lock`, `notebooks/<github-username>_*.ipynb` (your own only).
-`.github/CODEOWNERS` is the machine-readable copy of this table. CI fails any PR that touches a path its author does not own.
+Shared by everyone: `mimi/` (except `mimi/STATE.md`, which only `CandyButcher27` writes, and `mimi/state/<github-username>.md`, which only that person writes), `pyproject.toml`, `uv.lock`, `notebooks/<github-username>_*.ipynb` (your own only).
+`.github/CODEOWNERS` is the machine-readable copy of this table. CI fails any PR that touches a path its author does not own. `teammates/<github-username>.md` repeats each person's paths with their dependencies and known mistakes.
 
 ## 3. Scope — the rule that prevents most conflicts
 - You MUST only create, edit, rename or delete files the user owns (section 2) plus the shared files.
@@ -61,20 +67,22 @@ Shared by everyone: `mimi/`, `pyproject.toml`, `uv.lock`, `notebooks/<github-use
 - PR into `main`: title in conventional-commit form; body says what changed, why, and how it was tested. Keep PRs small and merge within a few days; long-lived branches cause the conflicts.
 - PRs are squash-merged. `main` is protected: it needs a PR, a green `ci` check and a green `review` check, and the branch must be up to date with `main`.
 - Right after `gh pr create`, you MUST run `gh pr merge --auto --squash`. GitHub then merges the PR by itself once `ci` and `review` are green. Nobody approves or merges by hand; do not wait for `CandyButcher27`.
-- `review` is an automated Claude review. If it fails, run `gh pr view --comments`, read the comment starting `**Review: BLOCK**`, fix every blocking issue on the same branch and push. Both checks re-run on every push. NEVER close the PR and open a new one to get a fresh review.
+- One open PR per topic. NEVER close a PR to open a new one for the same work, for any reason: a blocked review, red CI, or a conflict. Push the fix to the same branch (playbook sections D, F, G).
+- After a PR merges, NEVER commit on that branch again. Delete it and branch from fresh `main` (playbook section E).
+- `review` is an automated Claude review. If it fails, run `gh pr view --comments`, read the comment starting `**Review: BLOCK**`, fix every blocking issue on the same branch and push. Both checks re-run on every push.
 - If `ci` fails, run `gh pr checks` and `gh run view --log-failed`, fix and push.
 - Before ending the session, run `gh pr checks --watch` and stay until the PR is merged or you have told the user exactly what blocks it.
 
 ## 7. Conflicts
 - `uv.lock`: `git checkout --theirs uv.lock && uv lock` (during `git merge main`), then commit.
 - `mimi/ISSUES.md`, `mimi/decisions.md`: git merges these automatically. IDs carry the author's initials so they never clash: `ISS-HG-1`, `DEC-HG-1`.
-- `mimi/STATE.md`: combine both sides, never pick one. Keep both sides' Broken / Open threads / Next 3 entries, drop anything finished, write your own `Last session`.
+- `mimi/STATE.md` and `mimi/state/*.md` never conflict: each has a single writer (plus `CandyButcher27` as admin). If one shows up in your diff and it is not yours, undo it: `git checkout origin/main -- <path>`.
 - `mimi/MIMI.md` index lines: take either side, then run the mimi `index` command to regenerate them.
 - After resolving anything in `mimi/`, run the mimi `index` and `check` commands (paths in `mimi/MIMI.md`) until it prints `memory layer clean`.
 - Conflict in a file owned by someone else: stop and ask the user. NEVER resolve it by discarding the other side.
 
 ## 8. Session end — MUST run before the user stops
-1. Run the `mimi-close` skill (the user may say "mimi close").
+1. Run the `mimi-close` skill (the user may say "mimi close"). Where it says to overwrite `mimi/STATE.md`, overwrite `mimi/state/<github-username>.md` instead, with the same sections. Never write `mimi/STATE.md` unless the user is `CandyButcher27`; CI fails the PR if you do.
 2. If `mimi/.gitignore` or `mimi/.ignore` exists, delete both. mimi's `init` recreates them; left in place, new memory files silently stop being shared.
 3. Commit your code and the `mimi/` changes on your branch, push, and open or update the PR. Arm auto-merge and see it through (section 6).
 4. Tell the user the PR link, whether it merged, and anything they must tell another owner.
