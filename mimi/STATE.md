@@ -13,7 +13,7 @@ nothing deployed; course project, demo track. Repo workflow (CI, Claude review, 
 - Collaborator invites still pending for djahnavi180506 and hritikshukla144; they cannot push until accepted (see mimi/memory/external.md)
 - Module interfaces for prediction, uncertainty, fpl, planning, backtesting pending stubs from respective owners
 - Unconfirmed: GitHub username mapping djahnavi180506 = Jhavi Dasari, TA619 = Triyansh Agarwaal (used in AGENTS.md and .github/CODEOWNERS)
-- Harsh: 3 unenforced review suggestions from PR #6 still open in data/pipeline.py: missing `kickoff_time` defaults to a fabricated constant and `was_home` to True; DGW aggregation depends on row order; team_id and opponent_team_id come from separate name maps
+- Harsh: 3 unenforced review suggestions from PR #6 still open in data/pipeline.py: missing kickoff_time defaults to a fabricated constant and was_home to True; DGW aggregation depends on row order; team_id and opponent_team_id come from separate name maps
 
 ## Next 3
 1. Tarun: FPL rules spec as constraints in fpl/
@@ -23,9 +23,8 @@ nothing deployed; course project, demo track. Repo workflow (CI, Claude review, 
 ## Last session (2026-10-02)
 Branch: Vidhan-J28/init
 Uncommitted: none
-Stopped at: Resolved Git Bot blockers (hashable state, flexible horizon, and objective tests). Ready for PR.
+Stopped at: Corrected planning test naming and restored STATE.md per owner request.
 Tried, failed: none
 Resume with: Open PR for professor review and begin integration with Tarun.
 
 Last updated: 2026-10-02
-
