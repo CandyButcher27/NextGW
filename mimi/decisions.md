@@ -67,3 +67,9 @@ Why: every mimi-close overwrote the single shared mimi/STATE.md, so every PR con
 Rejected: keep one STATE.md with "edit only your own lines" — tried in AGENTS.md, conflicts and corruption continued. A union merge driver in .gitattributes — silently duplicates or interleaves sections.
 Reverse if: mimi-close gains native per-user state, or the team shrinks to one or two people.
 Date: 2026-10-03
+
+## DEC-AS-7 — Agents identify the user with `gh api user`, then follow a per-person guide in teammates/
+Why: teammates' agents closed blocked PRs and opened new ones for the same work (#5 → #6, #9 → #10), and kept committing on merged branches. Each person now has `teammates/<github-username>.md` (owned paths, dependencies, past mistakes) plus a shared `teammates/PLAYBOOK.md` with exact PR, conflict and CI-failure steps. Session start resumes the user's open PR instead of starting a new one (PR #13, commit 10b7149).
+Rejected: identifying the user from the branch prefix — wrong on `main` or on a reused branch, and the agent guessed. Keeping all per-person detail in AGENTS.md — too long to follow reliably.
+Reverse if: `gh` is unavailable to a teammate's agent, or the guides drift from CODEOWNERS.
+Date: 2026-10-03
