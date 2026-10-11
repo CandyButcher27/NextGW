@@ -33,7 +33,7 @@ gh pr list --author @me --state open
 - Name new tests `tests/test_<your-module>_<topic>.py`. Any other name is owned by `CandyButcher27`, and CI fails your PR.
 - Commit small: `uv run pytest`, then `git add <file> <file>` by name, then `git commit -m "feat: ..."`.
 - Push early: `git push -u origin HEAD` the first time, `git push` after that.
-- Your session state goes only in `mimi/state/<github-username>.md`. Never edit `mimi/STATE.md` (team-level, `CandyButcher27` only) or another person's state file. When `mimi-close` says to overwrite `mimi/STATE.md`, write your own state file instead.
+- Your session state goes only in `mimi/state/<github-username>.md`. Never edit another person's state file. `mimi/STATE.md` is team-level: edit it only for team-level facts. When `mimi-close` says to overwrite `mimi/STATE.md`, write your own state file instead.
 
 ## C. Opening the PR — only if `gh pr list --author @me --state open` shows none for this branch
 ```bash
@@ -56,7 +56,8 @@ git status --short                 # lines starting with UU are conflicted files
 Resolve each conflicted file:
 - **Your own file** → open it, keep both sides' intent, remove every `<<<<<<<`, `=======`, `>>>>>>>` marker.
 - **`uv.lock`** → `git checkout --theirs uv.lock && uv lock`
-- **`mimi/STATE.md` or someone else's `mimi/state/*.md`** → you should not have touched it. Take `main`'s version: `git checkout --theirs <path>`.
+- **`mimi/STATE.md`** → keep both sides' lines.
+- **Someone else's `mimi/state/*.md`** → you should not have touched it. Take `main`'s version: `git checkout --theirs <path>`.
 - **`mimi/ISSUES.md`, `mimi/decisions.md`** → keep both sides' entries.
 - **A file someone else owns** → stop. Do not pick a side. Tell the user who owns it.
 
@@ -109,4 +110,4 @@ Follow `AGENTS.md` section 8. Tell the user the PR link, whether it merged, and 
 - Commit on a branch whose PR already merged.
 - Push to `main`, force-push, rebase a pushed branch, or use `--no-verify`.
 - `git add -A` / `git add .` without reading what it stages.
-- Edit another person's files, their `mimi/state/` file, or `mimi/STATE.md`.
+- Edit another person's files, or their `mimi/state/` file.

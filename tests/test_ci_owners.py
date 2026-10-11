@@ -25,8 +25,5 @@ def test_foreign_paths_rejected():
 
 
 def test_state_files_are_personal():
-    assert violations(RULES, "Harsh1331", ["mimi/STATE.md", "mimi/state/Vidhan-J28.md"]) == [
-        "mimi/STATE.md",
-        "mimi/state/Vidhan-J28.md",
-    ]
+    assert violations(RULES, "Harsh1331", ["mimi/STATE.md", "mimi/state/Vidhan-J28.md"]) == ["mimi/state/Vidhan-J28.md"]
     assert violations(RULES, "CandyButcher27", ["mimi/STATE.md", "mimi/state/Harsh1331.md"]) == []
