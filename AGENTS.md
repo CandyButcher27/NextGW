@@ -32,7 +32,7 @@ The user is the GitHub username from section 1. Never guess it from the branch n
 | Tanishq | `print-tanish` | `backtesting/metrics.py`, `tests/test_metrics_*` |
 | Aryaman Srivastava | `CandyButcher27` | everything not listed above: `dashboard/`, `configs/`, `scripts/`, `.github/`, top-level pipeline, `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.gitattributes` |
 
-Shared by everyone: `mimi/` (except `mimi/STATE.md`, which only `CandyButcher27` writes, and `mimi/state/<github-username>.md`, which only that person writes), `pyproject.toml`, `uv.lock`, `notebooks/<github-username>_*.ipynb` (your own only).
+Shared by everyone: `mimi/` (including the team-level `mimi/STATE.md`, except `mimi/state/<github-username>.md`, which only that person writes), `pyproject.toml`, `uv.lock`, `notebooks/<github-username>_*.ipynb` (your own only).
 `.github/CODEOWNERS` is the machine-readable copy of this table. CI fails any PR that touches a path its author does not own. `teammates/<github-username>.md` repeats each person's paths with their dependencies and known mistakes.
 
 ## 3. Scope — the rule that prevents most conflicts
@@ -76,13 +76,14 @@ Shared by everyone: `mimi/` (except `mimi/STATE.md`, which only `CandyButcher27`
 ## 7. Conflicts
 - `uv.lock`: `git checkout --theirs uv.lock && uv lock` (during `git merge main`), then commit.
 - `mimi/ISSUES.md`, `mimi/decisions.md`: git merges these automatically. IDs carry the author's initials so they never clash: `ISS-HG-1`, `DEC-HG-1`.
-- `mimi/STATE.md` and `mimi/state/*.md` never conflict: each has a single writer (plus `CandyButcher27` as admin). If one shows up in your diff and it is not yours, undo it: `git checkout origin/main -- <path>`.
+- `mimi/state/*.md` never conflict: each has a single writer (plus `CandyButcher27` as admin). If one shows up in your diff and it is not yours, undo it: `git checkout origin/main -- <path>`.
+- `mimi/STATE.md`: anyone may edit it; on conflict keep both sides' lines.
 - `mimi/MIMI.md` index lines: take either side, then run the mimi `index` command to regenerate them.
 - After resolving anything in `mimi/`, run the mimi `index` and `check` commands (paths in `mimi/MIMI.md`) until it prints `memory layer clean`.
 - Conflict in a file owned by someone else: stop and ask the user. NEVER resolve it by discarding the other side.
 
 ## 8. Session end — MUST run before the user stops
-1. Run the `mimi-close` skill (the user may say "mimi close"). Where it says to overwrite `mimi/STATE.md`, overwrite `mimi/state/<github-username>.md` instead, with the same sections. Never write `mimi/STATE.md` unless the user is `CandyButcher27`; CI fails the PR if you do.
+1. Run the `mimi-close` skill (the user may say "mimi close"). Where it says to overwrite `mimi/STATE.md`, overwrite `mimi/state/<github-username>.md` instead, with the same sections. Edit `mimi/STATE.md` only for team-level facts (goal, deployment, team open threads).
 2. If `mimi/.gitignore` or `mimi/.ignore` exists, delete both. mimi's `init` recreates them; left in place, new memory files silently stop being shared.
 3. Commit your code and the `mimi/` changes on your branch, push, and open or update the PR. Arm auto-merge and see it through (section 6).
 4. Tell the user the PR link, whether it merged, and anything they must tell another owner.
