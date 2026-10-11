@@ -12,5 +12,18 @@ nothing deployed; course project, demo track. Repo workflow (CI, Claude review, 
 - Module interfaces for uncertainty, fpl, planning, backtesting pending stubs from respective owners; prediction API proposed in DEC-JD-1, awaiting consumer sign-off
 - Collaborator invite still pending for hritikshukla144; cannot push until accepted (see mimi/memory/external.md)
 - Unconfirmed: GitHub username mapping djahnavi180506 = Jhavi Dasari, TA619 = Triyansh Agarwaal (used in AGENTS.md and .github/CODEOWNERS)
+- Harsh: 3 unenforced review suggestions from PR #6 still open in data/pipeline.py: missing kickoff_time defaults to a fabricated constant and was_home to True; DGW aggregation depends on row order; team_id and opponent_team_id come from separate name maps
+
+## Next 3
+1. Tarun: FPL rules spec as constraints in fpl/
+2. Jhavi: ML prediction model and feature pipeline consuming data module
+3. Final end-to-end test of the 4-GW plan against a mock backtesting engine.
+
+## Last session (2026-10-02)
+Branch: Vidhan-J28/init
+Uncommitted: none
+Stopped at: Corrected planning test naming and restored STATE.md per owner request.
+Tried, failed: none
+Resume with: Open PR for professor review and begin integration with Tarun.
 
 Last updated: 2026-10-03
