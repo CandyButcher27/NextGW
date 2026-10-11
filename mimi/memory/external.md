@@ -4,7 +4,7 @@ which credentials reach what, environment traps. Move a topic to its own file on
 
 Last verified: 2026-10-02
 
-## Why can't I push to main / why is my PR not mergeable (GitHub branch protection)
+## Why can't I push to main or merge my PR (branch protection)
 Repo CandyButcher27/NextGW (public). main protection, set 2026-09-30 via `gh api`, not in the repo:
 - required status checks `ci` and `review`, strict (branch must be up to date with main)
 - PR required, 0 approvals; force-push and branch deletion blocked
@@ -14,7 +14,7 @@ Repo CandyButcher27/NextGW (public). main protection, set 2026-09-30 via `gh api
 - Collaborators hold the `write` role, so they can merge their own green PR. A user-owned repo cannot limit who merges; only the required checks gate it.
 Check with `gh api repos/CandyButcher27/NextGW/branches/main/protection`.
 
-## Why did nobody tell me my PR is stuck (failed checks, no reminders)
+## PR stuck with no reminder (failed checks)
 A red `ci` or `review` leaves the PR open with no timeout, no auto-close and no reminder. GitHub sends the pusher one "Run failed" notification per run, subject to their personal notification settings; Aryaman is not notified. Armed auto-merge waits silently. No chat alert exists (offered 2026-10-02, deferred until PRs rot unnoticed).
 
 ## Claude PR review: whose credentials, what it costs
@@ -24,6 +24,9 @@ A red `ci` or `review` leaves the PR open with no timeout, no auto-close and no 
 - First real PRs, 2026-10-01 (n=3 runs): 49 s and 52 s on PR #6 (+1751 lines), 30 s on PR #7 (docs). PR #6 was blocked for a silent synthetic-data fallback, then approved after the fix.
 - Only blocking issues gate the merge. The up-to-3 suggestions per review are not enforced or tracked anywhere but the PR comment.
 - A run that returns no structured verdict fails the check (fail closed).
+
+## gh pr checks: "no checks reported" after a push
+Right after a push or `gh pr update-branch`, the new runs are not registered yet. Observed 2026-10-12: `gh pr checks 15 --watch` right after `gh pr update-branch 15` printed `no checks reported on the 'Vidhan-J28/init' branch` and exited 1; on PR #16 it printed the previous push's failed `ci` and exited. Wait about 20 s before watching.
 
 ## Collaborators and GitHub usernames
 Invites sent 2026-09-30. Accepted as of 2026-10-03 (`write` role): Harsh1331, djahnavi180506, TarunPK15, Vidhan-J28, TA619, print-tanish. Still pending, cannot push yet: hritikshukla144. Owner: CandyButcher27.
