@@ -79,3 +79,18 @@ Why: the CandyButcher27-only rule failed the `ci` ownership check on PR #15 for 
 Rejected: admin-merging blocked PRs case by case — keeps Aryaman in the loop. Loosening the ownership check itself — it is what stops cross-module edits.
 Reverse if: STATE.md conflicts or overwritten team lines come back, as before DEC-AS-6.
 Date: 2026-10-12
+
+## DEC-TA-1 — PROPOSED: backtest simulator interface
+Status: PROPOSED — pending sign-off from print-tanish (metrics), Vidhan-J28 (planner as a strategy) and TarunPK15 (transition_fn).
+API (`backtesting/simulator.py`, `backtesting/experiments.py`):
+- `Strategy` protocol: attribute `name: str`, method `decide(state: PlanningState, history: pd.DataFrame, season: str, gameweek: int) -> GWPlan`. `history` is `data.get_pre_deadline_history(data, season, gameweek)`: no rows from the decision Gameweek or later.
+- `simulate(strategy, data, season, start_gw, end_gw, initial_state, transition_fn, scoring=None) -> pd.DataFrame`. `transition_fn(state, plan) -> next_state` is the same callable `planning.plan` takes; the fpl module is expected to supply it.
+- `run_experiment(name, strategies, data, season, start_gw, end_gw, initial_state, transition_fn, output_dir, features, config=None, scoring=None) -> pd.DataFrame` writes `<output_dir>/<name>/results.csv` and `metadata.json` (data period, features, strategies, scoring, initial state, config).
+- Result columns (`RESULT_COLUMNS`), one row per strategy per Gameweek: `strategy, season, gameweek, num_transfers, free_transfers, hits, hit_cost, xi_points, captain_id, captain_played, captain_bonus, gw_points, cumulative_points`. `gw_points = xi_points + captain_bonus - hit_cost`.
+- `ScoringConfig(transfer_hit_cost=4.0, captain_multiplier=2.0)`: rule values as arguments.
+Scoring: realised `total_points` summed per player per Gameweek (DGW rows summed); a player with no row scores 0. Vice-captain gets the multiplier if the captain played 0 minutes. Player ids compared as strings, matching `planning`.
+Not handled yet: FPL legality checks and automatic substitutions (need fpl/), chips (rejected with ValueError).
+Why: baselines, the planner and metrics need one replay loop that enforces the pre-deadline information cut; fpl/ has no agreed interface yet, so legality is delegated to `transition_fn` instead of re-implemented here.
+Rejected: re-implementing squad/formation/autosub rules in backtesting/ — AGENTS.md §3 forbids working around fpl/.
+Reverse if: consumer owners agree a different strategy signature or result columns.
+Date: 2026-10-14

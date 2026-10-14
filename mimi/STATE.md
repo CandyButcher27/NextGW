@@ -13,6 +13,6 @@ nothing deployed; course project, demo track. Repo workflow (CI, Claude review, 
 - Collaborator invite still pending for hritikshukla144; cannot push until accepted (see mimi/memory/external.md)
 - Unconfirmed: GitHub username mapping djahnavi180506 = Jhavi Dasari, TA619 = Triyansh Agarwaal (used in AGENTS.md and .github/CODEOWNERS)
 - Harsh: 3 unenforced review suggestions from PR #6 still open in data/pipeline.py: missing kickoff_time defaults to a fabricated constant and was_home to True; DGW aggregation depends on row order; team_id and opponent_team_id come from separate name maps
-- Pending module work: Tarun's FPL rules spec as constraints in fpl/; Jhavi's ML prediction model and feature pipeline consuming the data module
+- Pending module work: Tarun's FPL rules spec as constraints in fpl/
 
-Last updated: 2026-10-12
+Last updated: 2026-10-14
