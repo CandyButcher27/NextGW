@@ -150,3 +150,26 @@ def test_simulate_rejects_mismatched_initial_state_and_bad_range():
         simulate(strategy, make_data(), SEASON, 2, 4, make_state(1), next_gw)
     with pytest.raises(ValueError, match="start_gw"):
         simulate(strategy, make_data(), SEASON, 4, 2, make_state(4), next_gw)
+
+
+def test_decision_is_logged_with_transfers_xi_and_armband():
+    outcomes = gameweek_outcomes(make_data(), SEASON, 1)
+    gw_plan = plan(xi=("1", "2"), captain="2", vice="1", transfers=[("3", "4"), ("1", "5")])
+    result = score_gameweek(make_state(free_transfers=2), gw_plan, outcomes, ScoringConfig())
+    assert result["transfers"] == "3>4;1>5"
+    assert result["starting_xi"] == "1,2"
+    assert result["captain_id"] == "2"
+    assert result["vice_captain_id"] == "1"
+
+
+def test_no_transfers_logs_empty_string():
+    result = score_gameweek(make_state(), plan(), gameweek_outcomes(make_data(), SEASON, 1), ScoringConfig())
+    assert result["transfers"] == ""
+
+
+def test_simulate_rejects_transition_that_does_not_advance_one_gameweek():
+    def stuck(state, gw_plan):
+        return state
+
+    with pytest.raises(ValueError, match="transition_fn"):
+        simulate(FixedStrategy("fixed", plan()), make_data(), SEASON, 1, 3, make_state(), stuck)

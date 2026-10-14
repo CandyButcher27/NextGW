@@ -22,12 +22,15 @@ RESULT_COLUMNS: list[str] = [
     "strategy",
     "season",
     "gameweek",
+    "transfers",
+    "starting_xi",
     "num_transfers",
     "free_transfers",
     "hits",
     "hit_cost",
     "xi_points",
     "captain_id",
+    "vice_captain_id",
     "captain_played",
     "captain_bonus",
     "gw_points",
@@ -79,7 +82,11 @@ def score_gameweek(
     """Score one decision against realised outcomes.
 
     Players with no row in ``outcomes`` score 0 and count as not having played. If the captain
-    played 0 minutes, the vice-captain receives the captain multiplier instead.
+    played 0 minutes, the vice-captain receives the captain multiplier instead; if neither
+    played, no captain bonus is scored.
+
+    The decision itself is logged: ``transfers`` as ``"out>in"`` pairs joined by ``;`` and
+    ``starting_xi`` as player ids joined by ``,``.
     """
     if plan.chip is not None:
         raise ValueError(f"Chips are not supported by the simulator yet: {plan.chip.chip_name}")
@@ -103,12 +110,15 @@ def score_gameweek(
     hit_cost = hits * scoring.transfer_hit_cost
 
     return {
+        "transfers": ";".join(f"{t.player_out}>{t.player_in}" for t in plan.transfers),
+        "starting_xi": ",".join(str(pid) for pid in lineup.starting_xi),
         "num_transfers": num_transfers,
         "free_transfers": state.free_transfers,
         "hits": hits,
         "hit_cost": hit_cost,
         "xi_points": xi_points,
         "captain_id": str(lineup.captain),
+        "vice_captain_id": str(lineup.vice_captain),
         "captain_played": captain_played,
         "captain_bonus": captain_bonus,
         "gw_points": xi_points + captain_bonus - hit_cost,
@@ -157,4 +167,8 @@ def simulate(
             }
         )
         state = transition_fn(state, plan)
+        if state.gameweek != gameweek + 1:
+            raise ValueError(
+                f"transition_fn returned GW {state.gameweek} after GW {gameweek}; expected {gameweek + 1}"
+            )
     return pd.DataFrame(rows, columns=RESULT_COLUMNS)
