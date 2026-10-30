@@ -238,3 +238,4 @@ def solve_squad(
     if solution:
         return Squad(list(solution.values()))
     return None
+

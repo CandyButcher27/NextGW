@@ -410,3 +410,4 @@ def min_conflicts(csp: CSP, max_steps: int = 1000) -> dict[str, Any] | None:
         current[var] = best_val
 
     return None
+

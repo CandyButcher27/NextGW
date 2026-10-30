@@ -222,3 +222,4 @@ def solve_optimal_lineup(
         captain=captain,
         vice_captain=vice_captain,
     )
+

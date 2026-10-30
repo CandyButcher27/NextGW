@@ -383,3 +383,4 @@ def calculate_transfer_hits(
     hits = max(0, num_transfers - free_transfers)
     hit_cost = hits * config.transfer_hit_cost
     return (hits, hit_cost)
+

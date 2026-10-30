@@ -336,3 +336,4 @@ def generate_candidate_plans(
             )
 
     return candidates
+

@@ -131,3 +131,4 @@ def test_map_coloring():
 
 if __name__ == "__main__":
     unittest.main()
+
