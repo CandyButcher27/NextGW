@@ -116,3 +116,4 @@ uv run pytest tests/test_fpl_* -v
 # Or with standard Python unittest
 python -m unittest discover -s tests -p "test_fpl_*.py" -v
 ```
+

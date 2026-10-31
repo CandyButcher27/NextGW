@@ -52,6 +52,9 @@ class FPLRulesConfig:
     captain_multiplier: float = 2.0
     triple_captain_multiplier: float = 3.0
 
+    # Pricing defaults
+    default_player_price: float = 5.0
+
     # Chips
     valid_chips: frozenset[str] = field(
         default_factory=lambda: frozenset({"Wildcard", "FreeHit", "TripleCaptain", "BenchBoost"})
@@ -255,8 +258,13 @@ def validate_chip(
     errors: list[str] = []
     if chip_name not in config.valid_chips:
         errors.append(f"Unknown chip '{chip_name}'. Valid chips are: {sorted(list(config.valid_chips))}.")
-    elif chip_name in chips_used:
-        errors.append(f"Chip '{chip_name}' has already been used this season.")
+    else:
+        used_count = sum(1 for c in chips_used if c == chip_name)
+        if used_count >= config.chip_limit_per_season:
+            errors.append(
+                f"Chip '{chip_name}' has reached its season limit of {config.chip_limit_per_season} "
+                f"(used {used_count} times)."
+            )
     return (len(errors) == 0, errors)
 
 

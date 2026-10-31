@@ -187,6 +187,7 @@ class TestFPLTransfers(unittest.TestCase):
         candidate_pool = [
             Player("star_mid", "Star Mid", "MID", "MCI", 7.0),
         ]
+        registry = {p.player_id: p for p in self.squad_players}
         pts = {
             "star_mid": 15.0,
             "mid_0": 1.0,
@@ -197,6 +198,7 @@ class TestFPLTransfers(unittest.TestCase):
             initial_state,
             candidate_pool=candidate_pool,
             expected_points=pts,
+            player_registry=registry,
         )
 
         self.assertGreaterEqual(len(candidates), 1)
@@ -211,7 +213,10 @@ class TestFPLTransfers(unittest.TestCase):
 
         # Plug candidate generator into search
         search._get_candidate_plans = lambda state: generate_candidate_plans(
-            state, candidate_pool=candidate_pool, expected_points=pts
+            state,
+            candidate_pool=candidate_pool,
+            expected_points=pts,
+            player_registry=registry,
         )
 
         best_plans = search.plan(initial_state, [], transition_fn)
@@ -221,6 +226,79 @@ class TestFPLTransfers(unittest.TestCase):
             t.player_in for plan in best_plans for t in plan.transfers
         ]
         self.assertIn("star_mid", transfer_ins)
+
+    def test_transition_fn_raises_when_player_out_not_in_squad(self):
+        initial_state = PlanningState(
+            gameweek=1,
+            squad=self.squad.to_state_squad(),
+            budget=1.0,
+            free_transfers=1,
+        )
+        plan = GWPlan(
+            transfers=[TransferAction(player_out="non_existent_player", player_in="mid_new")],
+            lineup=LineupAction(
+                starting_xi=[p.player_id for p in self.squad_players[:11]],
+                captain="mid_0",
+                vice_captain="mid_1",
+            ),
+        )
+        with self.assertRaises(ValueError) as ctx:
+            transition_fn(initial_state, plan)
+        self.assertIn("is not in current squad", str(ctx.exception))
+
+    def test_candidate_generation_filters_unaffordable_players(self):
+        initial_state = PlanningState(
+            gameweek=0,
+            squad=self.squad.to_state_squad(),
+            budget=0.0,
+            free_transfers=1,
+        )
+        candidate_pool = [
+            Player("expensive_mid", "Expensive Mid", "MID", "BHA", 12.0),
+        ]
+        registry = {p.player_id: p for p in self.squad_players}
+        candidates = generate_candidate_plans(
+            initial_state,
+            candidate_pool=candidate_pool,
+            player_registry=registry,
+        )
+        transfer_ins = [
+            t.player_in for plan in candidates for t in plan.transfers
+        ]
+        self.assertNotIn("expensive_mid", transfer_ins)
+
+    def test_candidate_generation_filters_club_limit_exceeded(self):
+        # Current squad has 3 LIV players: def_2, def_3, mid_0.
+        # mid_1 is ARS. Setting mid_1 to lowest projected points forces mid_1 to be the candidate out.
+        # Bringing in liv_mid (LIV) would yield 4 LIV players, which must be rejected.
+        initial_state = PlanningState(
+            gameweek=0,
+            squad=self.squad.to_state_squad(),
+            budget=5.0,
+            free_transfers=1,
+        )
+        candidate_pool = [
+            Player("liv_mid", "Liverpool Mid", "MID", "LIV", 7.0),
+        ]
+        registry = {p.player_id: p for p in self.squad_players}
+        pts = {
+            "mid_0": 5.0,
+            "mid_1": -1.0,  # lowest points in MID -> selected as out_pid
+            "mid_2": 5.0,
+            "mid_3": 5.0,
+            "mid_4": 5.0,
+            "liv_mid": 10.0,
+        }
+        candidates = generate_candidate_plans(
+            initial_state,
+            candidate_pool=candidate_pool,
+            expected_points=pts,
+            player_registry=registry,
+        )
+        transfer_ins = [
+            t.player_in for plan in candidates for t in plan.transfers
+        ]
+        self.assertNotIn("liv_mid", transfer_ins)
 
 
 def test_transfers():

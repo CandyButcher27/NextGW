@@ -177,12 +177,18 @@ def transition_fn(
             out_id = str(t.player_out)
             in_id = str(t.player_in)
 
+            # Ensure player_out exists in squad
+            if out_id not in squad_dict:
+                raise ValueError(
+                    f"Cannot transfer out '{out_id}': player is not in current squad."
+                )
+
             # Look up price and position
             out_pos = squad_dict.get(out_id, "MID")
             out_price = (
                 player_registry[out_id].price
                 if player_registry and out_id in player_registry
-                else 5.0
+                else config.default_player_price
             )
 
             if player_registry and in_id in player_registry:
@@ -194,8 +200,7 @@ def transition_fn(
                 in_price = out_price
 
             # Remove out, add in
-            if out_id in squad_dict:
-                del squad_dict[out_id]
+            del squad_dict[out_id]
             squad_dict[in_id] = in_pos
 
             # Update bank budget
@@ -243,6 +248,7 @@ def generate_candidate_plans(
     config: FPLRulesConfig = DEFAULT_CONFIG,
     max_transfers: int = 1,
     top_k_candidates: int = 3,
+    player_registry: Mapping[str, Player] | None = None,
 ) -> list[GWPlan]:
     """Generate legal candidate plans for beam search in planning.
 
@@ -267,6 +273,8 @@ def generate_candidate_plans(
         Maximum number of transfers per candidate branch (typically 1 for search efficiency).
     top_k_candidates : int
         Number of top candidate incoming players to consider per position.
+    player_registry : Mapping of {player_id: Player}
+        Optional player lookup for squad player metadata and prices.
     """
     pts = expected_points or {}
     candidates: list[GWPlan] = []
@@ -295,6 +303,30 @@ def generate_candidate_plans(
     if max_transfers < 1 or not candidate_pool:
         return candidates
 
+    # Build player registry for current squad to get accurate prices and clubs
+    registry: dict[str, Player] = {}
+    if player_registry:
+        registry.update(player_registry)
+    for p in candidate_pool:
+        registry.setdefault(p.player_id, p)
+
+    squad_players_map: dict[str, Player] = {}
+    current_club_counts: Counter[str] = Counter()
+    for pid, pos in squad_dict.items():
+        if pid in registry:
+            p = registry[pid]
+        else:
+            p = Player(
+                player_id=pid,
+                name=pid,
+                position=pos,
+                team="UNK",
+                price=config.default_player_price,
+            )
+        squad_players_map[pid] = p
+        if p.team and p.team != "UNK":
+            current_club_counts[p.team] += 1
+
     # 2. 1-Transfer candidates
     # Find lowest projected squad players in each position
     squad_by_pos: dict[str, list[str]] = {"GK": [], "DEF": [], "MID": [], "FWD": []}
@@ -316,9 +348,29 @@ def generate_candidate_plans(
 
         # Out candidate: player in squad with lowest expected points
         out_pid = min(squad_pids, key=lambda pid: pts.get(pid, 0.0))
+        out_player = squad_players_map[out_pid]
+        out_price = out_player.price
+        available_funds = float(state.budget) + out_price
 
-        # Try top K replacements in that position
-        for in_player in pool_by_pos[pos][:top_k_candidates]:
+        added_for_pos = 0
+        for in_player in pool_by_pos[pos]:
+            if added_for_pos >= top_k_candidates:
+                break
+
+            # 1. Budget constraint check: cannot exceed available funds (bank + sale)
+            if in_player.price > available_funds + 1e-6:
+                continue
+
+            # 2. Club limit check: cannot exceed max_players_per_club
+            in_team = in_player.team
+            out_team = out_player.team
+            if in_team and in_team != "UNK":
+                current_count = current_club_counts.get(in_team, 0)
+                net_count = current_count if out_team == in_team else current_count + 1
+                if net_count > config.max_players_per_club:
+                    continue
+
+            # Legitimate candidate plan
             transfer = TransferAction(player_out=out_pid, player_in=in_player.player_id)
 
             # Test resulting squad lineup
@@ -334,6 +386,7 @@ def generate_candidate_plans(
                     chip=None,
                 )
             )
+            added_for_pos += 1
 
     return candidates
 

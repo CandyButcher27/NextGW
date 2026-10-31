@@ -191,6 +191,21 @@ class TestFPLRules(unittest.TestCase):
         # Wildcard -> 0 hit cost regardless of transfer count
         self.assertEqual(calculate_transfer_hits(5, 1, chip_name="Wildcard"), (0, 0.0))
 
+    def test_validate_chip_season_limit(self):
+        # Valid unused chip
+        is_valid, errors = validate_chip("Wildcard", chips_used=[])
+        self.assertTrue(is_valid, f"Errors: {errors}")
+
+        # Used chip reaches season limit
+        is_valid, errors = validate_chip("Wildcard", chips_used=["Wildcard"])
+        self.assertFalse(is_valid)
+        self.assertTrue(any("season limit" in err for err in errors))
+
+        # Config allowing multiple chips (e.g. 2 Wildcards per season)
+        config_two_wc = FPLRulesConfig(chip_limit_per_season=2)
+        is_valid, errors = validate_chip("Wildcard", chips_used=["Wildcard"], config=config_two_wc)
+        self.assertTrue(is_valid, f"Errors: {errors}")
+
 
 def test_rules():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestFPLRules)
