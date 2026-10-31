@@ -207,7 +207,7 @@ def create_squad_selection_csp(
 
 def solve_squad(
     player_pool: Sequence[Player],
-    budget: float = 100.0,
+    budget: float | None = None,
     config: FPLRulesConfig = DEFAULT_CONFIG,
     expected_points: Mapping[str, float] | None = None,
 ) -> Squad | None:
@@ -215,6 +215,7 @@ def solve_squad(
 
     If expected_points are provided, prioritizes higher-scoring players in domain ordering.
     """
+    total_budget = budget if budget is not None else config.budget
     sorted_pool = list(player_pool)
     if expected_points:
         sorted_pool.sort(key=lambda p: expected_points.get(p.player_id, 0.0), reverse=True)
@@ -222,7 +223,7 @@ def solve_squad(
         # Sort by value (price ascending to easily find feasible assignments)
         sorted_pool.sort(key=lambda p: p.price)
 
-    csp = create_squad_selection_csp(sorted_pool, config, budget=budget)
+    csp = create_squad_selection_csp(sorted_pool, config, budget=total_budget)
     
     # Custom domain ordering to pick highest points / best value first
     def order_domain(c: CSP, var: str, assignment: dict[str, Any]) -> list[Any]:

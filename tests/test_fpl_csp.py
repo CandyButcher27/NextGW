@@ -121,6 +121,22 @@ class TestCSPEngine(unittest.TestCase):
         self.assertIsInstance(solutions, list)
         self.assertEqual(len(solutions), 2)
 
+    def test_min_conflicts_deterministic_seed(self):
+        """min_conflicts must produce deterministic results when given the same seed."""
+        variables = ["A", "B", "C"]
+        domains = {v: [1, 2, 3] for v in variables}
+        csp1 = CSP(variables, domains)
+        csp1.add_constraint(AllDifferentConstraint(variables))
+
+        csp2 = CSP(variables, domains)
+        csp2.add_constraint(AllDifferentConstraint(variables))
+
+        res1 = min_conflicts(csp1, max_steps=500, seed=123)
+        res2 = min_conflicts(csp2, max_steps=500, seed=123)
+
+        self.assertIsNotNone(res1)
+        self.assertEqual(res1, res2)
+
 
 def test_map_coloring():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestCSPEngine)

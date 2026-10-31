@@ -389,12 +389,14 @@ def backtracking_search(
     return res
 
 
-def min_conflicts(csp: CSP, max_steps: int = 1000) -> dict[str, Any] | None:
-    """Min-Conflicts local search algorithm for CSPs."""
+def min_conflicts(csp: CSP, max_steps: int = 1000, seed: int = 42) -> dict[str, Any] | None:
+    """Min-Conflicts local search algorithm for CSPs with an explicit random seed."""
+    rng = random.Random(seed)
+
     # Start with a random initial complete assignment
     current: dict[str, Any] = {}
     for var in csp.variables:
-        current[var] = random.choice(csp.domains[var])
+        current[var] = rng.choice(csp.domains[var])
 
     for _ in range(max_steps):
         conflicted = [
@@ -404,10 +406,18 @@ def min_conflicts(csp: CSP, max_steps: int = 1000) -> dict[str, Any] | None:
         if not conflicted:
             return current
 
-        var = random.choice(conflicted)
-        # Pick value that minimizes conflicts
-        best_val = min(csp.domains[var], key=lambda val: csp.nconflicts(var, val, current))
-        current[var] = best_val
+        var = rng.choice(conflicted)
+        # Pick value that minimizes conflicts (break ties randomly with rng)
+        min_conf = float("inf")
+        best_vals = []
+        for val in csp.domains[var]:
+            conf = csp.nconflicts(var, val, current)
+            if conf < min_conf:
+                min_conf = conf
+                best_vals = [val]
+            elif conf == min_conf:
+                best_vals.append(val)
+        current[var] = rng.choice(best_vals)
 
     return None
 
