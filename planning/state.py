@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Set, Dict
+
 
 @dataclass(frozen=True)
 class PlanningState:
@@ -13,5 +13,5 @@ class PlanningState:
     free_transfers: int
     chips_used: frozenset = field(default_factory=frozenset)
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"State(GW={self.gameweek}, Budget={self.budget}, FT={self.free_transfers})"

@@ -1,4 +1,5 @@
-from typing import Dict, List
+from collections.abc import Mapping, Sequence
+
 from .state import PlanningState
 from .actions import GWPlan
 
@@ -7,7 +8,11 @@ class PlanningObjective:
     Calculates the utility of a plan.
     Utility = (Expected Points from XI) - (Transfer Hit Costs).
     """
-    def __init__(self, point_forecasts: Dict[int, Dict[str, float]], transfer_cost: float = 4.0):
+    def __init__(
+        self,
+        point_forecasts: Mapping[int, Mapping[str, float]],
+        transfer_cost: float = 4.0,
+    ) -> None:
         """
         Args:
             point_forecasts: Map of {gw: {player_id: expected_points}}
@@ -42,7 +47,11 @@ class PlanningObjective:
             
         return xi_points - cost
 
-    def calculate_total_utility(self, state_sequence: List[PlanningState], plan_sequence: List[GWPlan]) -> float:
+    def calculate_total_utility(
+        self,
+        state_sequence: Sequence[PlanningState],
+        plan_sequence: Sequence[GWPlan],
+    ) -> float:
         """
         Calculates cumulative utility across the planning horizon.
         """
