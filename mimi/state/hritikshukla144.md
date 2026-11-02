@@ -5,38 +5,34 @@
 - none known
 
 ## Open threads
-- PR #22 awaiting re-review after fixes
+- none
 
 ## Next 3
-1. Monitor PR #22 for merge completion after fixes
-2. Notify Vidhan-J28 that uncertainty module is available on main
-3. Assist with planning module integration if needed
+1. Notify Vidhan-J28 that uncertainty module is on main
+2. Assist with planning module integration if needed
+3. Consider adding chip uncertainty modeling when requested
 
 ## Last session
 **Date:** 2026-11-03
 
-**Branch:** hritikshukla144/uncertainty-module
+**Branch:** hritikshukla144/uncertainty-module (merged to main)
 
 **Uncommitted:**
-- plan.md (empty, untracked)
+- plan.md (empty, untracked - can be deleted)
 
 **Stopped at:**
-Fixed review issues in PR #22:
-1. Renamed shadowed `level` variable to `q_level` in distributions.py (lines 98, 165)
-2. Replaced np.interp clamping with proper tail extrapolation (lines 121-137)
-3. Added TestExtrapolation class with 2 tests verifying samples beyond p10/p90
-All 55 tests passing. Awaiting re-review and auto-merge.
+PR #22 MERGED to main. Uncertainty module complete and available.
+Fixes applied: variable shadowing (q_level), tail extrapolation, 2 new tests.
 
 **What was done:**
-- Fixed variable shadowing bug in confidence_interval and _sample_from_quantiles
-- Implemented linear extrapolation for tail quantiles (below p10, above p90)
-- Added tests verifying extrapolation preserves full probability mass
-- Pushed fix commit 6814a7e to PR branch
-
-**Tried, failed:**
-- None
+- Created PR #22 with uncertainty module (55 tests)
+- Fixed review blocking issues:
+  * Renamed shadowed `level` → `q_level` in distributions.py
+  * Replaced np.interp clamping with linear tail extrapolation
+  * Added TestExtrapolation class verifying samples beyond p10/p90
+- PR auto-merged after CI + review passed
 
 **Resume with:**
-Check PR status with `gh pr checks --watch`. Once merged, notify Vidhan.
+New work: checkout main, pull, create new branch for next topic.
 
 Last updated: 2026-11-03
