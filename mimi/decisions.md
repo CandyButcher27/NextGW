@@ -94,3 +94,16 @@ Why: baselines, the planner and metrics need one replay loop that enforces the p
 Rejected: re-implementing squad/formation/autosub rules in backtesting/ — AGENTS.md §3 forbids working around fpl/.
 Reverse if: consumer owners agree a different strategy signature or result columns.
 Date: 2026-10-14
+
+## DEC-VJ-1 — Defer transfer search while preserving the planner inputs
+Why: `plan(current_state, scenarios, transition_fn)` receives player points but no transfer-market player metadata such as position, price, or club. On 2026-11-03 Vidhan-J28 chose to keep this signature and use legal no-transfer plans for the current milestone.
+Rejected: adding `candidate_pool` and `player_registry` arguments to `plan()` in this change — the user asked to keep the existing signature.
+Reverse if: the planning and consuming owners agree on a route for supplying transfer-market metadata.
+Date: 2026-11-03
+Superseded by DEC-VJ-2
+
+## DEC-VJ-2 — Pass transfer-market metadata as optional planner inputs
+Why: The planner needs candidate positions, clubs, and prices to generate legal transfers. Vidhan-J28 reported that the backtesting consumer agreed to additive keyword-only `candidate_pool` and `player_registry` inputs on 2026-11-03; existing calls remain compatible.
+Rejected: placing the player catalog inside scenario samples or planning state — these values describe the transfer market, not forecast outcomes or the manager's current state.
+Reverse if: an agreed public catalog provider can supply deadline-safe metadata without planner call-site inputs.
+Date: 2026-11-03
