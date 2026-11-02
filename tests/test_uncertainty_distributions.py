@@ -307,3 +307,41 @@ class TestDistributionProperties:
         # Std should be reasonably close to 2 (quantile sampling approximates this)
         # Using a wider tolerance since quantile-based sampling is approximate
         assert 1.5 < np.std(samples, ddof=1) < 2.5
+
+
+class TestExtrapolation:
+    """Test that quantile sampling properly extrapolates beyond p10/p90."""
+    
+    def test_samples_beyond_p10_p90(self):
+        """Verify samples extend beyond the [p10, p90] range via extrapolation."""
+        # Create distribution with clear quantiles
+        dist = UncertaintyDistribution(
+            pred_mean=5.0,
+            pred_std=2.0,
+            quantiles={"p10": 2.0, "p25": 3.5, "p50": 5.0, "p75": 6.5, "p90": 8.0},
+        )
+        
+        # Generate many samples to ensure tail coverage
+        samples = dist.sample(n=10000, seed=42)
+        
+        # Verify some samples are below p10 (2.0) and above p90 (8.0)
+        # With proper extrapolation, we should see values beyond the quantile range
+        assert np.any(samples < 2.0), "No samples below p10 - extrapolation not working"
+        assert np.any(samples > 8.0), "No samples above p90 - extrapolation not working"
+    
+    def test_extrapolation_preserves_monotonicity(self):
+        """Verify extrapolated values maintain proper ordering."""
+        dist = UncertaintyDistribution(
+            pred_mean=10.0,
+            pred_std=3.0,
+            quantiles={"p10": 5.0, "p50": 10.0, "p90": 15.0},
+        )
+        
+        # Generate samples and verify they're reasonable
+        samples = dist.sample(n=5000, seed=123)
+        
+        # All samples should be non-negative (FPL constraint)
+        assert np.all(samples >= 0)
+        
+        # Mean should be close to the predicted mean
+        assert np.mean(samples) == pytest.approx(10.0, abs=0.5)

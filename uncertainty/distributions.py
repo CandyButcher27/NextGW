@@ -95,8 +95,8 @@ class UncertaintyDistribution:
         for key, value in self.quantiles.items():
             # Parse key like "p10" -> 0.10, "p25" -> 0.25, etc.
             if key.startswith("p") and key[1:].isdigit():
-                level = int(key[1:]) / 100.0
-                quantile_items.append((level, float(value)))
+                q_level = int(key[1:]) / 100.0
+                quantile_items.append((q_level, float(value)))
         
         if len(quantile_items) < 2:
             # Not enough quantiles for interpolation, fall back to Gaussian
@@ -112,12 +112,30 @@ class UncertaintyDistribution:
         # Generate uniform random quantile levels
         u = rng.uniform(0, 1, size=n)
         
-        # Interpolate using numpy's interp (handles linear interpolation)
-        # For extrapolation below first quantile or above last, we use the
-        # slope from the nearest interval
-        samples = np.interp(u, levels, values)
+        # Interpolate with proper extrapolation for tails
+        # np.interp clamps to range; we need to extrapolate beyond p10/p90
+        samples = np.empty(n, dtype=np.float64)
         
-        return samples.astype(np.float64)
+        # Points within the quantile range: standard interpolation
+        within_mask = (u >= levels[0]) & (u <= levels[-1])
+        if np.any(within_mask):
+            samples[within_mask] = np.interp(u[within_mask], levels, values)
+        
+        # Below first quantile: linear extrapolation using first interval slope
+        below_mask = u < levels[0]
+        if np.any(below_mask):
+            first_slope = (values[1] - values[0]) / (levels[1] - levels[0])
+            u_below = u[below_mask]
+            samples[below_mask] = values[0] + first_slope * (u_below - levels[0])
+        
+        # Above last quantile: linear extrapolation using last interval slope
+        above_mask = u > levels[-1]
+        if np.any(above_mask):
+            last_slope = (values[-1] - values[-2]) / (levels[-1] - levels[-2])
+            u_above = u[above_mask]
+            samples[above_mask] = values[-1] + last_slope * (u_above - levels[-1])
+        
+        return samples
     
     def confidence_interval(self, level: float = 0.90) -> tuple[float, float]:
         """Return a confidence interval at the specified level.
@@ -144,8 +162,8 @@ class UncertaintyDistribution:
             available_quantiles = {}
             for key, value in self.quantiles.items():
                 if key.startswith("p") and key[1:].isdigit():
-                    level = int(key[1:]) / 100.0
-                    available_quantiles[level] = value
+                    q_level = int(key[1:]) / 100.0
+                    available_quantiles[q_level] = value
             
             if available_quantiles:
                 # Find closest available quantiles to desired levels
