@@ -2,22 +2,22 @@
 <!-- Written only by CandyButcher27. Overwritten every session by mimi-close. Finished work leaves. Cap 60 lines. -->
 
 ## Broken
-- none known
+- none known; `uv run pytest` 214 passed on main at the end of this session
 
 ## Open threads
-- tests/test_objective.py duplicates tests/test_planning_objective.py (same 3 tests; PR #15 added the new file without deleting the old one)
-- Teammates' agents follow the new guides only after they pull main and run `gh auth login` (see DEC-AS-7)
+- Chip timing: hold value is flat, so chips fire in GW5-6. Next: hold = best forecastable later gain, or reserve Bench Boost for double GWs.
+- Wildcard / Free Hit planning needs whole-squad re-optimization (`greedy_squad` on window forecasts).
+- Teammates whose files changed this session should pull main: Tarun (fpl), hritikshukla144 (uncertainty), TA619 (backtesting, baselines), Vidhan (planning), print-tanish (metrics), Harsh (data).
 
 ## Next 3
-1. Delete tests/test_objective.py in a PR.
-2. Tell the team to pull main and run `gh auth login`; mention anyone may now edit mimi/STATE.md (DEC-AS-8).
-3. Add the `gh pr merge` allow rule via `/permissions` so merges are not blocked in auto mode.
+1. Chip timing from forecastable gains, tuned on dev 2023-24, tested on 2024-25.
+2. Wildcard / Free Hit planning.
+3. Dashboard for a recommended 4-GW plan.
 
-## Last session (2026-10-12)
+## Last session (2026-11-04)
 Branch: main
-Uncommitted: mimi/memory/external.md, mimi/MIMI.md, mimi/state/CandyButcher27.md
-Stopped at: unblocked and merged PR #15; opened STATE.md to the team (#16), moved Vidhan's notes out of it (#17), recorded DEC-AS-7/8 and fixed the memory index (#18). Memory updates not yet committed.
-Tried, failed: `merge.sh` stopped at `gh pr checks 15 --watch` because checks were not registered yet (see mimi/memory/external.md); writing `.claude/settings.local.json` from Claude was refused by auto mode.
-Resume with: commit the memory updates on a `CandyButcher27/<topic>` branch, then `git rm tests/test_objective.py` in a PR.
+Stopped at: PRs #24-#38 merged: review fixes, admin co-ownership, baselines, MVP backtest, fixture and ML forecasters, multi-season paired evaluation, oracle diagnostic, discount, transfer cost, 2-transfer moves, retraining option, metrics, auto-subs, chips.
+Tried, failed: discount (held out -105), 2-transfer moves (-55 to -91 on dev), in-season retraining (-64 to -72 on dev), fixture-heuristic forecasts for the planner (ties or trails greedy).
+Resume with: chip timing on a `CandyButcher27/<topic>` branch from fresh main.
 
-Last updated: 2026-10-12
+Last updated: 2026-11-04
