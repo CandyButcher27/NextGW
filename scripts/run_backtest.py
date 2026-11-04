@@ -53,9 +53,13 @@ def run_season(config: dict, season: str, seed: int, data: pd.DataFrame, forecas
     strategies = [
         *(
             PlannerStrategy(
-                name=f"planner-h{p['horizon']}-d{p.get('discount', 1.0)}",
                 forecaster=forecaster,
-                **{"transfer_value": config.get("transfer_value", 0.0), "max_transfers": config.get("max_transfers", 1), **p},
+                **{
+                    "name": f"planner-h{p['horizon']}-d{p.get('discount', 1.0)}",
+                    "transfer_value": config.get("transfer_value", 0.0),
+                    "max_transfers": config.get("max_transfers", 1),
+                    **p,
+                },
             )
             for p in config["planners"]
         ),

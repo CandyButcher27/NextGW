@@ -1,5 +1,5 @@
-name = "model"
-seasons = ["2023-24", "2024-25"]
+name = "model-heldout"
+seasons = ["2024-25"]
 train_seasons = ["2022-23", "2023-24"]
 start_gw = 5
 end_gw = 38
@@ -10,10 +10,16 @@ output_dir = "results"
 forecaster = "model"
 features = ["prediction.train HistGradientBoosting, frozen at start_gw, trained on earlier seasons + GW1-4"]
 
-[[planners]]
-horizon = 4
-discount = 1.0
+# transfer_value per strategy chosen on dev season 2023-24 (3 squad seeds, values 0-3); 2024-25 held out
+transfer_value = 2.0
 
 [[planners]]
 horizon = 4
-discount = 0.7
+discount = 1.0
+transfer_value = 3.0
+
+[[planners]]
+name = "planner-h4-d1.0-tv2"
+horizon = 4
+discount = 1.0
+transfer_value = 2.0
