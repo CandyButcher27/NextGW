@@ -1,4 +1,8 @@
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 import altair as alt
 import pandas as pd
@@ -10,7 +14,6 @@ from data import load_clean_player_gw_data
 from prediction.form_forecast import fixture_forecaster, fixture_schedule, model_forecaster
 from prediction.train import train_model
 
-ROOT = Path(__file__).resolve().parents[1]
 SERIES = {
     "light": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"],
     "dark": ["#3987e5", "#d95926", "#199e70", "#c98500"],
