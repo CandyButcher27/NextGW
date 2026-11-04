@@ -42,3 +42,29 @@ def test_discount_applies_to_transfer_ranking():
 
     assert sold(1.0) == {"p8"}
     assert sold(0.01) == {"p7"}
+
+
+def test_planner_waits_for_better_triple_captain_week_but_greedy_does_not():
+    from baselines.greedy import GreedyStrategy
+
+    def forecaster(history, season, gameweek, horizon):
+        base = {f"p{i}": 1.0 for i in range(15)}
+        weeks = {5: base | {"p7": 5.0}, 6: base | {"p7": 15.0}}
+        return {gw: weeks.get(gw, base) for gw in range(gameweek, gameweek + horizon)}
+
+    history = make_history({})
+    chips = ("TripleCaptain",)
+    greedy = GreedyStrategy(forecaster=forecaster, chips=chips).decide(make_state(), history, SEASON, 5)
+    planner = PlannerStrategy(horizon=2, forecaster=forecaster, chips=chips).decide(make_state(), history, SEASON, 5)
+    assert greedy.chip is not None and greedy.chip.chip_name == "TripleCaptain"
+    assert planner.chip is None
+
+
+def test_used_chip_is_not_offered_again():
+    from planning.state import PlanningState
+
+    history = make_history({})
+    state = make_state()
+    used = PlanningState(state.gameweek, state.squad, state.budget, state.free_transfers, frozenset({"TripleCaptain"}))
+    plan = PlannerStrategy(horizon=1, chips=("TripleCaptain",)).decide(used, history, SEASON, 5)
+    assert plan.chip is None

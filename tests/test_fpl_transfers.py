@@ -385,5 +385,14 @@ def test_single_transfer_limit_by_default():
     assert max(len(plan.transfers) for plan in plans) == 1
 
 
+def test_transition_fn_rejects_reusing_a_chip():
+    from planning.actions import ChipAction
+
+    state, registry, lineup = _squad_state(budget=0.0)
+    used = PlanningState(gameweek=1, squad=state.squad, budget=0.0, free_transfers=1, chips_used=frozenset({"BenchBoost"}))
+    with pytest.raises(ValueError, match="season limit"):
+        transition_fn(used, GWPlan(transfers=[], lineup=lineup, chip=ChipAction("BenchBoost")), player_registry=registry)
+
+
 if __name__ == "__main__":
     unittest.main()

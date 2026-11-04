@@ -23,6 +23,8 @@ class PlannerStrategy:
     discount: float = 1.0
     transfer_value: float = 0.0
     max_transfers: int = 1
+    chips: tuple[str, ...] = ()
+    chip_hold: dict[str, float] = field(default_factory=dict)
     forecaster: Forecaster = field(default=form_forecast)
 
     def decide(self, state: PlanningState, history: pd.DataFrame, season: str, gameweek: int) -> GWPlan:
@@ -33,11 +35,13 @@ class PlannerStrategy:
                 transfer_cost=self.transfer_cost,
                 discount=self.discount,
                 transfer_value=self.transfer_value,
+                chip_hold=self.chip_hold,
             ),
             beam_width=self.beam_width,
             horizon=self.horizon,
             candidate_pool=active_pool(history, season, registry),
             player_registry=registry,
             max_transfers=self.max_transfers,
+            chips=self.chips,
         )
         return search.plan(state, [], partial(transition_fn, player_registry=registry))[0]

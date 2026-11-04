@@ -107,10 +107,33 @@ def test_captain_multiplier_is_configurable():
     assert result["captain_bonus"] == 20.0
 
 
-def test_chips_are_rejected_until_supported():
-    gw_plan = GWPlan(transfers=[], lineup=LineupAction(["1"], "1", "1"), chip=ChipAction("TripleCaptain"))
-    with pytest.raises(ValueError, match="Chips"):
-        score_gameweek(make_state(), gw_plan, gameweek_outcomes(make_data(), SEASON, 1), ScoringConfig())
+def test_triple_captain_triples_the_armband():
+    gw_plan = GWPlan(transfers=[], lineup=LineupAction(["1", "2"], "2", "1"), chip=ChipAction("TripleCaptain"))
+    result = score_gameweek(make_state(2), gw_plan, gameweek_outcomes(make_data(), SEASON, 2), ScoringConfig())
+    assert result["captain_bonus"] == 40.0
+    assert result["chip"] == "TripleCaptain"
+
+
+def test_bench_boost_scores_the_bench():
+    gw_plan = GWPlan(transfers=[], lineup=LineupAction(["1"], "1", "1", ["2"]), chip=ChipAction("BenchBoost"))
+    result = score_gameweek(make_state(2), gw_plan, gameweek_outcomes(make_data(), SEASON, 2), ScoringConfig())
+    assert result["xi_points"] == 22.0
+
+
+def test_wildcard_makes_transfers_free():
+    gw_plan = plan(xi=("1", "4"), captain="1", vice="4", transfers=[("2", "4"), ("3", "5")])
+    gw_plan = GWPlan(transfers=gw_plan.transfers, lineup=gw_plan.lineup, chip=ChipAction("Wildcard"))
+    result = score_gameweek(make_state(2, free_transfers=1), gw_plan, gameweek_outcomes(make_data(), SEASON, 2), ScoringConfig())
+    assert result["hits"] == 0 and result["hit_cost"] == 0.0
+
+
+def test_used_or_unknown_chip_is_rejected():
+    outcomes = gameweek_outcomes(make_data(), SEASON, 1)
+    used = PlanningState(gameweek=1, squad=make_state().squad, budget=100.0, free_transfers=1, chips_used=frozenset({"TripleCaptain"}))
+    with pytest.raises(ValueError, match="already used"):
+        score_gameweek(used, GWPlan([], LineupAction(["1"], "1", "1"), ChipAction("TripleCaptain")), outcomes, ScoringConfig())
+    with pytest.raises(ValueError, match="Unknown chip"):
+        score_gameweek(make_state(), GWPlan([], LineupAction(["1"], "1", "1"), ChipAction("Bogus")), outcomes, ScoringConfig())
 
 
 def test_double_gameweek_rows_are_summed():

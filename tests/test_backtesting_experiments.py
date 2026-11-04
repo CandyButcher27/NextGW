@@ -77,7 +77,7 @@ def test_run_experiment_writes_results_and_metadata(tmp_path):
     assert metadata["features"] == ["form_5", "minutes_5"]
     assert metadata["strategies"] == ["cap2"]
     assert metadata["config"] == {"seed": 7, "horizon": 4}
-    assert metadata["scoring"] == {"transfer_hit_cost": 4.0, "captain_multiplier": 2.0}
+    assert metadata["scoring"] == {"transfer_hit_cost": 4.0, "captain_multiplier": 2.0, "triple_captain_multiplier": 3.0}
     assert metadata["initial_state"]["gameweek"] == 1
 
 

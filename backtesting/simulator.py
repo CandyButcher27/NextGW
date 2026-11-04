@@ -3,7 +3,8 @@
 The simulator checks that the starting XI, captain, vice-captain and bench come from the
 post-transfer squad, and applies FPL automatic substitutions from the bench order when a lineup
 has one. Other FPL legality (formation, budget, club limits) is whatever ``transition_fn``
-enforces. Chips are not supported yet.
+enforces. Chips: Triple Captain triples the armband, Bench Boost scores all 15 without
+auto-subs, Wildcard and Free Hit make every transfer free; each chip once per season.
 """
 
 from __future__ import annotations
@@ -19,6 +20,8 @@ from fpl.rules import auto_substitute
 from planning.actions import GWPlan
 from planning.state import PlanningState
 
+CHIPS = frozenset({"Wildcard", "FreeHit", "TripleCaptain", "BenchBoost"})
+
 TransitionFn = Callable[[PlanningState, GWPlan], PlanningState]
 
 RESULT_COLUMNS: list[str] = [
@@ -28,6 +31,7 @@ RESULT_COLUMNS: list[str] = [
     "transfers",
     "starting_xi",
     "auto_subs",
+    "chip",
     "num_transfers",
     "free_transfers",
     "hits",
@@ -66,6 +70,7 @@ class ScoringConfig:
 
     transfer_hit_cost: float = 4.0
     captain_multiplier: float = 2.0
+    triple_captain_multiplier: float = 3.0
 
 
 def gameweek_outcomes(data: pd.DataFrame, season: str, gameweek: int) -> pd.DataFrame:
@@ -93,8 +98,11 @@ def score_gameweek(
     The decision itself is logged: ``transfers`` as ``"out>in"`` pairs joined by ``;`` and
     ``starting_xi`` as player ids joined by ``,``.
     """
-    if plan.chip is not None:
-        raise ValueError(f"Chips are not supported by the simulator yet: {plan.chip.chip_name}")
+    chip = plan.chip.chip_name if plan.chip else None
+    if chip is not None and chip not in CHIPS:
+        raise ValueError(f"Unknown chip {chip!r}; expected one of {sorted(CHIPS)}")
+    if chip is not None and chip in state.chips_used:
+        raise ValueError(f"Chip {chip} was already used this season")
 
     def points(player_id: str) -> float:
         key = str(player_id)
@@ -123,23 +131,27 @@ def score_gameweek(
 
     final_xi = [str(pid) for pid in lineup.starting_xi]
     substitutions: list[tuple[str, str]] = []
-    if bench:
+    if chip == "BenchBoost":
+        final_xi = final_xi + bench
+    elif bench:
         minutes = {pid: float(outcomes.at[pid, "minutes"]) for pid in squad if pid in outcomes.index}
         final_xi, substitutions = auto_substitute(final_xi, bench, positions, minutes)
 
     xi_points = sum(points(pid) for pid in final_xi)
     captain_played = played(lineup.captain)
     armband = lineup.captain if captain_played else lineup.vice_captain
-    captain_bonus = (scoring.captain_multiplier - 1.0) * points(armband)
+    multiplier = scoring.triple_captain_multiplier if chip == "TripleCaptain" else scoring.captain_multiplier
+    captain_bonus = (multiplier - 1.0) * points(armband)
 
     num_transfers = len(plan.transfers)
-    hits = max(0, num_transfers - state.free_transfers)
+    hits = 0 if chip in ("Wildcard", "FreeHit") else max(0, num_transfers - state.free_transfers)
     hit_cost = hits * scoring.transfer_hit_cost
 
     return {
         "transfers": ";".join(f"{t.player_out}>{t.player_in}" for t in plan.transfers),
         "starting_xi": ",".join(str(pid) for pid in lineup.starting_xi),
         "auto_subs": ";".join(f"{out}>{inn}" for out, inn in substitutions),
+        "chip": chip or "",
         "num_transfers": num_transfers,
         "free_transfers": state.free_transfers,
         "hits": hits,

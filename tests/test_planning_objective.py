@@ -75,3 +75,13 @@ def test_transfer_value_charges_free_transfers_in_utility():
         lineup=LineupAction(starting_xi=["p1"], captain="p1", vice_captain="p1"),
     )
     assert obj.calculate_gw_utility(PlanningState(gameweek=5, squad=(), budget=0.0, free_transfers=2), plan) == 4.5
+
+
+def test_chip_terms_and_hold_value():
+    from planning.actions import ChipAction
+
+    obj = PlanningObjective({5: {"c": 6.0, "b": 2.0}}, chip_hold={"TripleCaptain": 4.0})
+    lineup = LineupAction(starting_xi=["c"], captain="c", vice_captain="c", bench=["b"])
+    state = PlanningState(gameweek=5, squad=(), budget=0.0, free_transfers=1)
+    assert obj.calculate_gw_utility(state, GWPlan([], lineup, ChipAction("TripleCaptain"))) == 6.0 * 3 - 4.0
+    assert obj.calculate_gw_utility(state, GWPlan([], lineup, ChipAction("BenchBoost"))) == 6.0 * 2 + 2.0

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from uncertainty.scenarios import ScenarioResult
 
 from .state import PlanningState
-from .actions import GWPlan
+from .actions import ChipAction, GWPlan
 from .objective import PlanningObjective
 
 if TYPE_CHECKING:
@@ -26,12 +26,14 @@ class PlanningSearch:
         candidate_pool: Sequence[Player] | None = None,
         player_registry: Mapping[str, Player] | None = None,
         max_transfers: int = 1,
+        chips: Sequence[str] = (),
     ) -> None:
         self.objective = objective
         self.beam_width = beam_width
         self.horizon = horizon
         self.best_utility: float | None = None
         self.max_transfers = max_transfers
+        self.chips = tuple(chips)
         self.candidate_pool = tuple(candidate_pool) if candidate_pool is not None else None
         self.player_registry = {
             str(player_id): player
@@ -109,7 +111,7 @@ class PlanningSearch:
                 weight = self.objective.discount ** (gameweek - state.gameweek)
                 for player_id, value in points.items():
                     remaining[player_id] = remaining.get(player_id, 0.0) + weight * value
-        return generate_candidate_plans(
+        candidates = generate_candidate_plans(
             state,
             candidate_pool=self.candidate_pool,
             expected_points=self.objective.point_forecasts.get(state.gameweek, {}),
@@ -117,3 +119,9 @@ class PlanningSearch:
             ranking_points=remaining,
             max_transfers=self.max_transfers,
         )
+        available = [chip for chip in self.chips if chip not in state.chips_used]
+        return candidates + [
+            GWPlan(transfers=plan.transfers, lineup=plan.lineup, chip=ChipAction(chip))
+            for plan in candidates
+            for chip in available
+        ]

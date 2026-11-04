@@ -89,7 +89,7 @@ Each run writes `results/<name>/<season>/seed<n>/results.csv` and `metadata.json
 
 ## Status
 
-End-to-end pipeline works: data, forecasts (fixture heuristic and ML model), FPL rules, 4-GW beam search, greedy and rule-based baselines, historical backtests and metrics. Not done yet: chips, risk-aware use of the uncertainty scenarios, dashboard.
+End-to-end pipeline works: data, forecasts (fixture heuristic and ML model), FPL rules, 4-GW beam search, greedy and rule-based baselines, historical backtests and metrics. Chips: Triple Captain and Bench Boost are scored and planned (Wildcard and Free Hit are scored but not planned yet). Not done yet: chip timing (both chips currently fire in GW5-6), Wildcard/Free Hit planning, risk-aware use of the uncertainty scenarios, dashboard.
 
 ### Results so far
 
@@ -97,10 +97,10 @@ Backtests replay GW5-38 from several initial squads per season (seeded noise on 
 
 | Held-out season | 4-GW planner | Greedy 1-GW | Rule-based | Planner - greedy (SE) | Planner wins |
 |---|---|---|---|---|---|
-| 2024-25 (`configs/model.toml`) | 1896 | 1786 | 1810 | +111 (23) | 6/6 |
+| 2024-25 (`configs/model.toml`, with TC + BB chips) | 1899 | 1802 | 1810 | +97 (24) | 6/6 |
 | 2023-24 (`configs/model_fold2.toml`) | 1897 | 1829 | 1761 | +68 (16) | 6/6 |
 
-Points are season totals over GW5-38 with ML forecasts and FPL automatic substitutions. For 2024-25 the table shows the planner at the same transfer cost as greedy; the planner tuned to its own best cost scored 1909 (+123, SE 41, 5/6).
+Points are season totals over GW5-38 with ML forecasts and FPL automatic substitutions. For 2024-25 the table shows the planner at the same transfer cost as greedy; the planner tuned to its own best cost scored 1917 (+115, SE 44, 5/6). Without chips the 2024-25 gap was +111 (SE 23, 6/6).
 
 What the experiments showed:
 - **Lookahead helps only with good forecasts.** With an oracle that knows realised points, the 4-GW planner beats greedy by about 440 points a season, so the search is sound. With the fixture-heuristic forecasts, which overpredict top players by about 50%, the planner trails greedy by about 105 points a season (held out).

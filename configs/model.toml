@@ -12,6 +12,8 @@ features = ["prediction.train HistGradientBoosting, frozen at start_gw, trained 
 
 # transfer_value per strategy chosen on dev season 2023-24 (3 squad seeds, values 0-3); 2024-25 held out
 transfer_value = 2.0
+# chips: hold value 0 chosen on dev 2023-24 (holds 0/4/8 with Bench Boost at 2.5x; 0 and 4 tied, 8 worse)
+chips = ["TripleCaptain", "BenchBoost"]
 
 [[planners]]
 horizon = 4
