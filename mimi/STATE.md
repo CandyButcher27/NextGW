@@ -14,6 +14,5 @@ nothing deployed; course project, demo track. Repo workflow (CI, Claude review, 
 - End-to-end planner integration with backtesting and baseline comparison remain open.
 - Unconfirmed: GitHub username mapping djahnavi180506 = Jhavi Dasari, TA619 = Triyansh Agarwaal (used in AGENTS.md and .github/CODEOWNERS)
 - Harsh: 3 unenforced review suggestions from PR #6 still open in data/pipeline.py: missing kickoff_time defaults to a fabricated constant and was_home to True; DGW aggregation depends on row order; team_id and opponent_team_id come from separate name maps
-- PR #22 (hritikshukla144/uncertainty-module) merged to main at d96ba4d on 2026-11-03.
 
 Last updated: 2026-11-03
