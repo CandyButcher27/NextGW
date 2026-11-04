@@ -64,3 +64,14 @@ def test_discount_one_keeps_undiscounted_utility():
     obj = PlanningObjective({5: {"p1": 3.0}, 6: {"p1": 3.0}})
     plan = GWPlan(transfers=[], lineup=LineupAction(starting_xi=["p1"], captain="p1", vice_captain="p1"))
     assert obj.calculate_gw_utility(PlanningState(gameweek=6, squad=(), budget=0.0, free_transfers=1), plan) == 6.0
+
+
+def test_transfer_value_charges_free_transfers_in_utility():
+    from planning.actions import TransferAction
+
+    obj = PlanningObjective({5: {"p1": 3.0}}, transfer_value=1.5)
+    plan = GWPlan(
+        transfers=[TransferAction(player_out="x", player_in="p1")],
+        lineup=LineupAction(starting_xi=["p1"], captain="p1", vice_captain="p1"),
+    )
+    assert obj.calculate_gw_utility(PlanningState(gameweek=5, squad=(), budget=0.0, free_transfers=2), plan) == 4.5

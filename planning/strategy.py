@@ -21,6 +21,7 @@ class PlannerStrategy:
     beam_width: int = 10
     transfer_cost: float = 4.0
     discount: float = 1.0
+    transfer_value: float = 0.0
     forecaster: Forecaster = field(default=form_forecast)
 
     def decide(self, state: PlanningState, history: pd.DataFrame, season: str, gameweek: int) -> GWPlan:
@@ -30,6 +31,7 @@ class PlannerStrategy:
                 self.forecaster(history, season, gameweek, self.horizon),
                 transfer_cost=self.transfer_cost,
                 discount=self.discount,
+                transfer_value=self.transfer_value,
             ),
             beam_width=self.beam_width,
             horizon=self.horizon,
