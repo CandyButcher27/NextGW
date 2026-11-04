@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List, Tuple
 
 @dataclass(frozen=True)
@@ -18,6 +18,7 @@ class LineupAction(Action):
     starting_xi: List[str]
     captain: str
     vice_captain: str
+    bench: List[str] = field(default_factory=list)
 
 @dataclass(frozen=True)
 class ChipAction(Action):

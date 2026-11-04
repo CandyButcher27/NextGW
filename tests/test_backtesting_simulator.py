@@ -200,3 +200,31 @@ def test_rejects_captain_outside_starting_xi():
     outcomes = gameweek_outcomes(make_data(), SEASON, 2)
     with pytest.raises(ValueError, match="Captain"):
         score_gameweek(make_state(2), plan(xi=("1", "2"), captain="3", vice="1"), outcomes, ScoringConfig())
+
+
+def test_auto_substitution_replaces_non_playing_starter_from_bench():
+    positions = ["GK"] * 2 + ["DEF"] * 5 + ["MID"] * 5 + ["FWD"] * 3
+    squad = tuple((f"p{i}", pos) for i, pos in enumerate(positions))
+    state = PlanningState(gameweek=1, squad=squad, budget=0.0, free_transfers=1)
+    xi = ["p0", "p2", "p3", "p4", "p5", "p7", "p8", "p9", "p10", "p12", "p13"]
+    bench = ["p1", "p14", "p6", "p11"]
+    outcomes = pd.DataFrame(
+        {"total_points": [2.0] * 15, "minutes": [90.0] * 15}, index=[f"p{i}" for i in range(15)]
+    )
+    outcomes.loc["p13", "minutes"] = 0.0
+    outcomes.loc["p13", "total_points"] = 0.0
+    outcomes.loc["p14", "total_points"] = 9.0
+    gw_plan = GWPlan(transfers=[], lineup=LineupAction(xi, "p7", "p8", bench))
+    result = score_gameweek(state, gw_plan, outcomes, ScoringConfig())
+    assert result["auto_subs"] == "p13>p14"
+    assert result["xi_points"] == 10 * 2.0 + 9.0
+
+
+def test_bench_must_come_from_squad_outside_xi():
+    with pytest.raises(ValueError, match="Bench"):
+        score_gameweek(
+            make_state(2),
+            GWPlan(transfers=[], lineup=LineupAction(["1", "2"], "2", "1", ["2"])),
+            gameweek_outcomes(make_data(), SEASON, 2),
+            ScoringConfig(),
+        )
