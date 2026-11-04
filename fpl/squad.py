@@ -128,6 +128,49 @@ class Squad:
         return cls(players)
 
 
+def greedy_squad(
+    player_pool: Sequence[Player],
+    expected_points: Mapping[str, float],
+    budget: float | None = None,
+    config: FPLRulesConfig = DEFAULT_CONFIG,
+) -> Squad:
+    total_budget = config.budget if budget is None else budget
+    pts = lambda p: expected_points.get(p.player_id, 0.0)
+    quota = Counter(
+        {"GK": config.squad_gk_count, "DEF": config.squad_def_count, "MID": config.squad_mid_count, "FWD": config.squad_fwd_count}
+    )
+    picked: dict[str, Player] = {}
+    clubs: Counter[str] = Counter()
+    for p in sorted(player_pool, key=lambda p: (p.price, -pts(p))):
+        if quota[p.position] and clubs[p.team] < config.max_players_per_club:
+            picked[p.player_id] = p
+            quota[p.position] -= 1
+            clubs[p.team] += 1
+    spent = sum(p.price for p in picked.values())
+    if +quota or spent > total_budget + 1e-6:
+        raise ValueError(f"Pool cannot fill the squad within budget; open slots: {dict(+quota)}, cheapest cost {spent:.1f}")
+
+    improved = True
+    while improved:
+        improved = False
+        for p in sorted(player_pool, key=pts, reverse=True):
+            if p.player_id in picked:
+                continue
+            for out in sorted((q for q in picked.values() if q.position == p.position), key=pts):
+                if pts(p) <= pts(out):
+                    break
+                club_ok = p.team == out.team or clubs[p.team] < config.max_players_per_club
+                if club_ok and spent - out.price + p.price <= total_budget + 1e-6:
+                    del picked[out.player_id]
+                    picked[p.player_id] = p
+                    clubs[out.team] -= 1
+                    clubs[p.team] += 1
+                    spent += p.price - out.price
+                    improved = True
+                    break
+    return Squad(list(picked.values()))
+
+
 def create_squad_selection_csp(
     player_pool: Sequence[Player],
     config: FPLRulesConfig = DEFAULT_CONFIG,

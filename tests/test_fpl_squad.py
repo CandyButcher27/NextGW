@@ -99,3 +99,29 @@ def test_squad():
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_greedy_squad_is_legal_and_prefers_high_scorers():
+    from fpl.squad import greedy_squad
+
+    quota = {"GK": 4, "DEF": 10, "MID": 10, "FWD": 6}
+    pool = [
+        Player(f"{pos}{i}", f"{pos}{i}", pos, f"T{i % 10}", 4.0 + i)
+        for pos, n in quota.items()
+        for i in range(n)
+    ]
+    points = {p.player_id: p.price for p in pool} | {"MID9": 100.0}
+    squad = greedy_squad(pool, points, budget=100.0)
+    assert squad.validate() == (True, [])
+    assert "MID9" in squad
+    assert squad.total_cost <= 100.0
+
+
+def test_greedy_squad_raises_when_budget_too_small():
+    import pytest
+
+    from fpl.squad import greedy_squad
+
+    pool = [Player(f"p{i}", f"p{i}", pos, f"T{i}", 10.0) for i, pos in enumerate(["GK"] * 2 + ["DEF"] * 5 + ["MID"] * 5 + ["FWD"] * 3)]
+    with pytest.raises(ValueError, match="cannot fill"):
+        greedy_squad(pool, {}, budget=50.0)
