@@ -85,6 +85,14 @@ uv run python scripts/run_backtest.py configs/backtest.toml     # fixture-heuris
 uv run python scripts/run_backtest.py configs/oracle.toml       # diagnostic only: leaks realised points
 ```
 
+### Dashboard
+
+```bash
+uv run streamlit run dashboard/app.py
+```
+
+**Backtest results** charts each strategy's cumulative points against greedy for any run in `results/`, with the paired gap, win count and secondary metrics. **4-GW plan** picks a season and Gameweek, builds the best squad from pre-deadline data, and shows the planner's transfers, XI, captain and chips for the next 4 Gameweeks.
+
 Each run writes `results/<name>/<season>/seed<n>/results.csv` and `metadata.json` and prints per-strategy totals, the paired gap to greedy, and secondary metrics.
 
 ## Status
