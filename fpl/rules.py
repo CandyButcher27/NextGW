@@ -170,7 +170,7 @@ def validate_squad(
         errors.append(f"Total squad cost £{total_cost:.1f}m exceeds budget £{config.budget:.1f}m.")
 
     # 4. Club limit check
-    non_empty_clubs = [c for c in clubs if c]
+    non_empty_clubs = [c for c in clubs if c and c != "UNK"]
     club_counts = Counter(non_empty_clubs)
     for club_name, count in club_counts.items():
         if count > config.max_players_per_club:
