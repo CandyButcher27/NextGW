@@ -259,6 +259,7 @@ def generate_candidate_plans(
     max_transfers: int = 1,
     top_k_candidates: int = 3,
     player_registry: Mapping[str, Player] | None = None,
+    ranking_points: Mapping[str, float] | None = None,
 ) -> list[GWPlan]:
     """Generate legal candidate plans for beam search in planning.
 
@@ -285,8 +286,12 @@ def generate_candidate_plans(
         Number of top candidate incoming players to consider per position.
     player_registry : Mapping of {player_id: Player}
         Optional player lookup for squad player metadata and prices.
+    ranking_points : Mapping of {player_id: pts}
+        Points used to choose who to sell and buy, e.g. summed over a planning window.
+        Defaults to expected_points. Lineups always use expected_points.
     """
     pts = expected_points or {}
+    rank = ranking_points if ranking_points is not None else pts
     candidates: list[GWPlan] = []
 
     # Parse current squad
@@ -350,14 +355,14 @@ def generate_candidate_plans(
 
     # Sort available incoming pool by expected points descending
     for pos in pool_by_pos:
-        pool_by_pos[pos].sort(key=lambda p: pts.get(p.player_id, 0.0), reverse=True)
+        pool_by_pos[pos].sort(key=lambda p: rank.get(p.player_id, 0.0), reverse=True)
 
     for pos, squad_pids in squad_by_pos.items():
         if not squad_pids or not pool_by_pos[pos]:
             continue
 
         # Out candidate: player in squad with lowest expected points
-        out_pid = min(squad_pids, key=lambda pid: pts.get(pid, 0.0))
+        out_pid = min(squad_pids, key=lambda pid: rank.get(pid, 0.0))
         out_player = squad_players_map[out_pid]
         out_price = out_player.price
         available_funds = float(state.budget) + out_price
