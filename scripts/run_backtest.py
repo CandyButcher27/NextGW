@@ -3,6 +3,7 @@ import time
 import tomllib
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from backtesting.experiments import run_experiment
@@ -23,7 +24,7 @@ def oracle_forecaster(data: pd.DataFrame):
     return lambda history, season, gameweek, horizon: {gw: by_gw.get(gw, {}) for gw in range(gameweek, gameweek + horizon)}
 
 
-def run_season(config: dict, season: str) -> pd.DataFrame:
+def run_season(config: dict, season: str, seed: int) -> pd.DataFrame:
     start_gw = config["start_gw"]
     data = load_clean_player_gw_data(season=season, auto_fetch=False)
     history = get_pre_deadline_history(data, current_season=season, current_gameweek=start_gw)
@@ -34,20 +35,22 @@ def run_season(config: dict, season: str) -> pd.DataFrame:
         "oracle": lambda: oracle_forecaster(data),
     }[config["forecaster"]]()
     expected = fixture_forecaster(fixture_schedule(data))(history, season, start_gw, 1)[start_gw]
+    if seed:
+        rng = np.random.default_rng([seed, start_gw])
+        expected = {pid: pts * rng.lognormal(0.0, config["squad_noise"]) for pid, pts in expected.items()}
     squad = greedy_squad(active_pool(history, season, registry), expected, budget=config["budget"])
     initial_state = PlanningState(start_gw, squad.to_state_squad(), round(config["budget"] - squad.total_cost, 1), 1)
 
-    planner = config["planner"]
     strategies = [
         *(
-            PlannerStrategy(name=f"planner-h{h}", horizon=h, beam_width=planner["beam_width"], forecaster=forecaster)
-            for h in planner["horizons"]
+            PlannerStrategy(name=f"planner-h{p['horizon']}-d{p.get('discount', 1.0)}", forecaster=forecaster, **p)
+            for p in config["planners"]
         ),
         GreedyStrategy(forecaster=forecaster),
         ConventionalStrategy(),
     ]
     return run_experiment(
-        name=f"{config['name']}/{season}",
+        name=f"{config['name']}/{season}/seed{seed}",
         strategies=strategies,
         data=data,
         season=season,
@@ -64,11 +67,24 @@ def run_season(config: dict, season: str) -> pd.DataFrame:
 def main(config_path: str) -> None:
     config = tomllib.loads(Path(config_path).read_text(encoding="utf-8"))
     started = time.time()
-    results = pd.concat([run_season(config, season) for season in config["seasons"]], ignore_index=True)
-    per_season = results.pivot_table(index="strategy", columns="season", values="gw_points", aggfunc="sum")
-    per_season["total"] = per_season.sum(axis=1)
-    activity = results.groupby("strategy").agg(transfers=("num_transfers", "sum"), hits=("hits", "sum"), captain_bonus=("captain_bonus", "sum"))
-    print(per_season.join(activity).sort_values("total", ascending=False).round(0).to_string())
+    runs = []
+    for season in config["seasons"]:
+        for seed in range(config["squad_seeds"]):
+            runs.append(run_season(config, season, seed).assign(seed=seed))
+    results = pd.concat(runs, ignore_index=True)
+    totals = results.groupby(["strategy", "season", "seed"])["gw_points"].sum().unstack("strategy")
+    baseline = totals["greedy"]
+    summary = pd.DataFrame(
+        {
+            "mean_per_season": totals.mean(),
+            "vs_greedy_mean": totals.sub(baseline, axis=0).mean(),
+            "vs_greedy_se": totals.sub(baseline, axis=0).std() / np.sqrt(len(totals)),
+            "wins_vs_greedy": (totals.sub(baseline, axis=0) > 0).sum(),
+        }
+    )
+    print(totals.groupby(level="season").mean().T.round(0).to_string())
+    print(summary.sort_values("mean_per_season", ascending=False).round(1).to_string())
+    print(f"{len(totals)} runs (season x squad seed)")
     print(f"{time.time() - started:.0f}s, results in {Path(config['output_dir']) / config['name']}")
 
 

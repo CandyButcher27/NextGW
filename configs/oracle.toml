@@ -1,5 +1,7 @@
 name = "oracle-diagnostic"
 seasons = ["2022-23", "2023-24", "2024-25"]
+squad_seeds = 1
+squad_noise = 0.0
 start_gw = 5
 end_gw = 38
 budget = 100.0
@@ -7,6 +9,6 @@ output_dir = "results"
 forecaster = "oracle"
 features = ["LEAKS_REALISED_POINTS", "per_match_form_4gw", "opponent_factor", "home_factor", "matches_in_gw"]
 
-[planner]
-horizons = [2, 4]
-beam_width = 10
+[[planners]]
+horizon = 4
+
