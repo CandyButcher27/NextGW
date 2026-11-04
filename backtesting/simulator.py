@@ -1,8 +1,9 @@
 """Historical Gameweek replay: strategies decide before each deadline, real outcomes score them.
 
-The simulator checks only that the starting XI, captain and vice-captain come from the
-post-transfer squad. Other FPL legality (formation, budget, club limits) is whatever
-``transition_fn`` enforces, and automatic substitutions are not applied. Chips are not supported yet.
+The simulator checks that the starting XI, captain, vice-captain and bench come from the
+post-transfer squad, and applies FPL automatic substitutions from the bench order when a lineup
+has one. Other FPL legality (formation, budget, club limits) is whatever ``transition_fn``
+enforces. Chips are not supported yet.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from typing import Callable, Protocol
 import pandas as pd
 
 from data.leakage import get_pre_deadline_history
+from fpl.rules import auto_substitute
 from planning.actions import GWPlan
 from planning.state import PlanningState
 
@@ -25,6 +27,7 @@ RESULT_COLUMNS: list[str] = [
     "gameweek",
     "transfers",
     "starting_xi",
+    "auto_subs",
     "num_transfers",
     "free_transfers",
     "hits",
@@ -102,16 +105,29 @@ def score_gameweek(
         return key in outcomes.index and float(outcomes.at[key, "minutes"]) > 0
 
     lineup = plan.lineup
+    positions = {str(item[0]): str(item[1]) for item in state.squad if isinstance(item, (tuple, list))}
     squad = {str(item[0]) if isinstance(item, (tuple, list)) else str(item) for item in state.squad}
-    squad -= {str(t.player_out) for t in plan.transfers}
-    squad |= {str(t.player_in) for t in plan.transfers}
+    for t in plan.transfers:
+        squad.discard(str(t.player_out))
+        squad.add(str(t.player_in))
+        if str(t.player_out) in positions:
+            positions[str(t.player_in)] = positions[str(t.player_out)]
     xi = {str(pid) for pid in lineup.starting_xi}
     if not xi <= squad:
         raise ValueError(f"Starting XI has players not in the squad: {sorted(xi - squad)}")
     if str(lineup.captain) not in xi or str(lineup.vice_captain) not in xi:
         raise ValueError("Captain and vice-captain must be in the starting XI")
+    bench = [str(pid) for pid in lineup.bench]
+    if not set(bench) <= squad - xi:
+        raise ValueError(f"Bench has players not in the squad or already starting: {sorted(set(bench) - (squad - xi))}")
 
-    xi_points = sum(points(pid) for pid in lineup.starting_xi)
+    final_xi = [str(pid) for pid in lineup.starting_xi]
+    substitutions: list[tuple[str, str]] = []
+    if bench:
+        minutes = {pid: float(outcomes.at[pid, "minutes"]) for pid in squad if pid in outcomes.index}
+        final_xi, substitutions = auto_substitute(final_xi, bench, positions, minutes)
+
+    xi_points = sum(points(pid) for pid in final_xi)
     captain_played = played(lineup.captain)
     armband = lineup.captain if captain_played else lineup.vice_captain
     captain_bonus = (scoring.captain_multiplier - 1.0) * points(armband)
@@ -123,6 +139,7 @@ def score_gameweek(
     return {
         "transfers": ";".join(f"{t.player_out}>{t.player_in}" for t in plan.transfers),
         "starting_xi": ",".join(str(pid) for pid in lineup.starting_xi),
+        "auto_subs": ";".join(f"{out}>{inn}" for out, inn in substitutions),
         "num_transfers": num_transfers,
         "free_transfers": state.free_transfers,
         "hits": hits,

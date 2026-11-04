@@ -40,6 +40,7 @@ class Lineup:
             starting_xi=list(self.starting_xi),
             captain=str(self.captain),
             vice_captain=str(self.vice_captain),
+            bench=list(self.bench),
         )
 
     def validate(
