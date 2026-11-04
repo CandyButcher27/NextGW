@@ -50,3 +50,27 @@ def test_transfer_hit_points_rejects_negative_arguments():
         transfer_hit_points(num_transfers=1, free_transfers=-1)
     with pytest.raises(ValueError):
         transfer_hit_points(num_transfers=1, free_transfers=0, cost_per_hit=-4)
+
+
+def test_xi_changes_counts_new_starters():
+    from backtesting.metrics import xi_changes
+
+    assert xi_changes(["1,2,3", "1,2,4", "5,6,4"]) == [1, 2]
+
+
+def test_summarize_reports_per_run_means_and_stability():
+    import pandas as pd
+
+    from backtesting.metrics import summarize
+
+    rows = []
+    for seed in (0, 1):
+        for gw, xi in ((1, "1,2"), (2, "1,3")):
+            rows.append(
+                {"strategy": "s", "season": "x", "seed": seed, "gameweek": gw, "starting_xi": xi, "gw_points": 10.0,
+                 "num_transfers": 1, "hits": 0, "captain_bonus": 2.0, "decision_seconds": 0.5}
+            )
+    summary = summarize(pd.DataFrame(rows))
+    assert summary.loc["s", "points_per_run"] == 20.0
+    assert summary.loc["s", "xi_changes_per_gw"] == 1.0
+    assert summary.loc["s", "transfers_per_run"] == 2.0
