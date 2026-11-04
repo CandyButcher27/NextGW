@@ -1,12 +1,19 @@
-name = "fixture"
-seasons = ["2022-23", "2023-24", "2024-25"]
+name = "fixture-discount"
+seasons = ["2023-24", "2024-25"]
 start_gw = 5
 end_gw = 38
 budget = 100.0
+squad_seeds = 6
+squad_noise = 0.3
 output_dir = "results"
 forecaster = "fixture"
 features = ["per_match_form_4gw", "opponent_factor", "home_factor", "matches_in_gw"]
 
-[planner]
-horizons = [2, 4]
-beam_width = 10
+# discount 0.7 chosen on dev season 2022-23 (6 squad seeds); 2023-24 and 2024-25 are held out
+[[planners]]
+horizon = 4
+discount = 0.7
+
+[[planners]]
+horizon = 4
+discount = 1.0
