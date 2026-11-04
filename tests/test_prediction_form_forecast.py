@@ -36,3 +36,22 @@ def test_forecast_is_zero_in_blank_gameweek_and_doubles_in_double():
     forecast = fixture_forecaster(schedule, shrink=1e9)(history, SEASON, 2, 2)
     assert forecast[2]["2"] == 0.0
     assert forecast[3]["1"] == pytest.approx(2 * forecast[2]["1"])
+
+
+def test_model_forecaster_uses_only_decision_history(tmp_path):
+    from data import get_pre_deadline_history, load_synthetic_player_gw_data
+    from prediction.form_forecast import model_forecaster
+    from prediction.train import train_model
+
+    data = load_synthetic_player_gw_data(season=SEASON, raw_dir=tmp_path / "raw", processed_dir=tmp_path / "proc", num_players=12, num_gws=10)
+    model = train_model(data, as_of_season=SEASON, as_of_gameweek=6)
+    schedule = fixture_schedule(data)
+    history = get_pre_deadline_history(data, current_season=SEASON, current_gameweek=6)
+
+    full = model_forecaster(model, schedule)(history, SEASON, 6, 4)
+    assert sorted(full) == [6, 7, 8, 9]
+    assert len(full[6]) == data["player_id"].nunique()
+    assert model_forecaster(model, schedule)(history, SEASON, 6, 1) == {6: full[6]}
+
+    blank = {key: teams for key, teams in schedule.items() if key != (SEASON, 7)}
+    assert model_forecaster(model, blank)(history, SEASON, 6, 2)[7] == {}

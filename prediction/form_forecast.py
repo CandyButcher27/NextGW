@@ -67,3 +67,39 @@ def fixture_forecaster(
         return forecasts
 
     return forecast
+
+
+def model_forecaster(model, schedule: dict[tuple[str, int], dict[str, list[tuple[str, bool]]]]) -> Forecaster:
+    from prediction.predict import predict_gameweek
+
+    cache: dict[tuple[str, int, int], dict[int, dict[str, float]]] = {}
+
+    def forecast(history: pd.DataFrame, season: str, gameweek: int, horizon: int) -> dict[int, dict[str, float]]:
+        key = (season, gameweek, max(horizon, 4))
+        if key not in cache:
+            cache[key] = predict_window(history.loc[history["season"] == season], *key)
+        return {gw: cache[key][gw] for gw in range(gameweek, gameweek + horizon)}
+
+    def predict_window(history: pd.DataFrame, season: str, gameweek: int, horizon: int) -> dict[int, dict[str, float]]:
+        latest = history.sort_values("gameweek").groupby("player_id").tail(1)
+        forecasts: dict[int, dict[str, float]] = {}
+        for gw in range(gameweek, gameweek + horizon):
+            fixtures = schedule.get((season, gw), {})
+            rows = [
+                {
+                    "season": season, "gameweek": gw, "player_id": r.player_id, "position": r.position,
+                    "element_type": r.element_type, "team": r.team, "team_id": r.team_id,
+                    "opponent_team": " & ".join(o for o, _ in fixtures[r.team]),
+                    "was_home": fixtures[r.team][0][1], "matches_in_gw": len(fixtures[r.team]),
+                }
+                for r in latest.itertuples()
+                if r.team in fixtures
+            ]
+            if not rows:
+                forecasts[gw] = {}
+                continue
+            predicted = predict_gameweek(model, history, pd.DataFrame(rows))
+            forecasts[gw] = dict(zip(predicted["player_id"].astype(str), predicted["predicted_points"].astype(float)))
+        return forecasts
+
+    return forecast
