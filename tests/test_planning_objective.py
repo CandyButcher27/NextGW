@@ -50,3 +50,17 @@ def test_free_transfers_no_cost():
     plan_1_transfer = GWPlan(transfers=['t1'], lineup=LineupAction(['p1'], 'p1', 'p1'))
     # Expected: p1(10) + cap_p1(10) - 0 = 20.0
     assert obj.calculate_gw_utility(state, plan_1_transfer) == 20.0
+
+
+def test_discount_weights_later_gameweeks():
+    forecasts = {5: {"p1": 10.0}, 6: {"p1": 10.0}, 7: {"p1": 10.0}}
+    obj = PlanningObjective(forecasts, discount=0.5)
+    plan = GWPlan(transfers=[], lineup=LineupAction(starting_xi=["p1"], captain="p1", vice_captain="p1"))
+    utilities = [obj.calculate_gw_utility(PlanningState(gameweek=gw, squad=(), budget=0.0, free_transfers=1), plan) for gw in (5, 6, 7)]
+    assert utilities == [20.0, 10.0, 5.0]
+
+
+def test_discount_one_keeps_undiscounted_utility():
+    obj = PlanningObjective({5: {"p1": 3.0}, 6: {"p1": 3.0}})
+    plan = GWPlan(transfers=[], lineup=LineupAction(starting_xi=["p1"], captain="p1", vice_captain="p1"))
+    assert obj.calculate_gw_utility(PlanningState(gameweek=6, squad=(), budget=0.0, free_transfers=1), plan) == 6.0

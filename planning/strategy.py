@@ -20,12 +20,17 @@ class PlannerStrategy:
     horizon: int = 4
     beam_width: int = 10
     transfer_cost: float = 4.0
+    discount: float = 1.0
     forecaster: Forecaster = field(default=form_forecast)
 
     def decide(self, state: PlanningState, history: pd.DataFrame, season: str, gameweek: int) -> GWPlan:
         registry = player_registry(history, season)
         search = PlanningSearch(
-            PlanningObjective(self.forecaster(history, season, gameweek, self.horizon), transfer_cost=self.transfer_cost),
+            PlanningObjective(
+                self.forecaster(history, season, gameweek, self.horizon),
+                transfer_cost=self.transfer_cost,
+                discount=self.discount,
+            ),
             beam_width=self.beam_width,
             horizon=self.horizon,
             candidate_pool=active_pool(history, season, registry),

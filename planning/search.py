@@ -104,8 +104,9 @@ class PlanningSearch:
         remaining: dict[str, float] = {}
         for gameweek, points in self.objective.point_forecasts.items():
             if gameweek >= state.gameweek:
+                weight = self.objective.discount ** (gameweek - state.gameweek)
                 for player_id, value in points.items():
-                    remaining[player_id] = remaining.get(player_id, 0.0) + value
+                    remaining[player_id] = remaining.get(player_id, 0.0) + weight * value
         return generate_candidate_plans(
             state,
             candidate_pool=self.candidate_pool,
