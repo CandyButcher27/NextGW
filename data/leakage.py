@@ -151,11 +151,12 @@ def compute_leakage_safe_lags(
             result[col_name] = grouped.shift(lag)
 
         # Rolling averages strictly shifted by 1 first
+        shifted = grouped.shift(1)
+        shifted_groups = shifted.groupby([result["player_id"], result["season"]])
         for w in rolling_windows:
             col_name = f"{col}_roll_{w}_mean"
             # shift(1) ensures the current gameweek t is not included in the window
-            result[col_name] = grouped.transform(
-                lambda s: s.shift(1).rolling(window=w, min_periods=1).mean()
-            )
+            rolled = shifted_groups.rolling(window=w, min_periods=1).mean()
+            result[col_name] = rolled.reset_index(level=[0, 1], drop=True)
 
     return result
