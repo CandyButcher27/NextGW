@@ -30,13 +30,14 @@ The user is the GitHub username from section 1. Never guess it from the branch n
 | Vidhan Jain | `Vidhan-J28` | `planning/`, `tests/test_planning_*` |
 | Triyansh Agarwaal | `TA619` | `baselines/`, `backtesting/simulator.py`, `backtesting/experiments.py`, `tests/test_baselines_*`, `tests/test_backtesting_*` |
 | Tanishq | `print-tanish` | `backtesting/metrics.py`, `tests/test_metrics_*` |
-| Aryaman Srivastava | `CandyButcher27` | everything not listed above: `dashboard/`, `configs/`, `scripts/`, `.github/`, top-level pipeline, `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.gitattributes` |
+| Aryaman Srivastava | `CandyButcher27` | co-owner of every module above, plus everything not listed above: `dashboard/`, `configs/`, `scripts/`, `.github/`, top-level pipeline, `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.gitattributes` |
 
 Shared by everyone: `mimi/` (including the team-level `mimi/STATE.md`, except `mimi/state/<github-username>.md`, which only that person writes), `pyproject.toml`, `uv.lock`, `notebooks/<github-username>_*.ipynb` (your own only).
 `.github/CODEOWNERS` is the machine-readable copy of this table. CI fails any PR that touches a path its author does not own. `teammates/<github-username>.md` repeats each person's paths with their dependencies and known mistakes.
 
 ## 3. Scope — the rule that prevents most conflicts
 - You MUST only create, edit, rename or delete files the user owns (section 2) plus the shared files.
+- Exception: `CandyButcher27` co-owns every module path and may edit it; tell the module owner what changed.
 - NEVER edit another owner's file, even for a one-line fix, a typo, an import, or to make a test pass. Instead: stop, tell the user exactly what change is needed and why, and draft a short message they can send to the owner.
 - NEVER work around another module (copying its code, monkey-patching it, re-implementing it in your module). Use its public interface, or ask for a change.
 - If the module you depend on does not exist yet, write against the interface agreed in `mimi/decisions.md`. If there is none, stop and ask the user to agree it with the owner.
