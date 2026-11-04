@@ -429,20 +429,21 @@ class TestScenarioStatistics:
         max_diff = np.max(np.abs(sample_means - ps.pred_means))
         assert max_diff < 0.5  # Tolerance for random sampling
     
-    def test_scenario_non_negative(self):
-        """Test that all scenario values are non-negative."""
+    def test_scenario_mean_not_inflated(self):
+        """Scenario values may go negative so their mean matches pred_mean."""
         df = pd.DataFrame({
             "season": ["2024-25"] * 10,
             "gameweek": list(range(1, 11)),
             "player_id": [101] * 10,
             "pred_mean": [1.0] * 10,  # Low mean
-            "pred_std": [3.0] * 10,   # High std (would produce negatives without clipping)
+            "pred_std": [3.0] * 10,
         })
         
         result = generate_scenarios_from_predictions(df, n_scenarios=1000, seed=42)
         ps = result.get_player(101)
         
-        assert np.all(ps.scenarios >= 0), "All scenario values should be non-negative"
+        assert np.any(ps.scenarios < 0)
+        assert ps.scenarios.mean() == pytest.approx(1.0, abs=0.15)
 
 
 class TestIntegrationWithPredictionFormat:

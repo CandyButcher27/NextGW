@@ -46,7 +46,6 @@ class UncertaintyDistribution:
         
         For empirical distributions with quantiles, uses linear interpolation
         between quantile points. Falls back to Gaussian if quantiles unavailable.
-        All samples are clipped to non-negative values (FPL points cannot be < 0).
         
         Args:
             n: Number of samples to generate.
@@ -73,8 +72,7 @@ class UncertaintyDistribution:
         else:
             samples = np.full(n, self.pred_mean, dtype=np.float64)
         
-        # FPL points cannot be negative
-        return np.maximum(samples, 0.0)
+        return samples
     
     def _sample_from_quantiles(
         self,
@@ -314,7 +312,7 @@ def estimate_from_residuals(
     quantiles = {}
     for level in quantile_levels:
         residual_quantile = np.quantile(residuals, level)
-        quantiles[f"p{int(level * 100):02d}"] = max(0.0, pred_mean + residual_quantile)
+        quantiles[f"p{int(level * 100):02d}"] = pred_mean + float(residual_quantile)
     
     return UncertaintyDistribution(
         pred_mean=pred_mean,
