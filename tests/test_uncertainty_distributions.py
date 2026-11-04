@@ -51,15 +51,12 @@ class TestUncertaintyDistribution:
         assert samples.shape == (100,)
         assert samples.dtype == np.float64
     
-    def test_sample_non_negative(self):
-        """Test that samples are non-negative (FPL constraint)."""
-        dist = UncertaintyDistribution(
-            pred_mean=1.0,
-            pred_std=5.0,
-            quantiles={"p10": -2.0, "p50": 1.0, "p90": 4.0},
-        )
-        samples = dist.sample(n=1000, seed=42)
-        assert np.all(samples >= 0), "All samples should be non-negative"
+    def test_sample_keeps_negative_points_and_mean(self):
+        """FPL points can be negative; clipping at 0 would inflate the mean."""
+        dist = UncertaintyDistribution(pred_mean=1.0, pred_std=2.0, quantiles={})
+        samples = dist.sample(n=200_000, seed=42)
+        assert np.any(samples < 0)
+        assert np.mean(samples) == pytest.approx(1.0, abs=0.05)
     
     def test_sample_reproducibility(self):
         """Test that sampling is reproducible with same seed."""
@@ -345,3 +342,15 @@ class TestExtrapolation:
         
         # Mean should be close to the predicted mean
         assert np.mean(samples) == pytest.approx(10.0, abs=0.5)
+
+
+def test_confidence_interval_uses_requested_level():
+    dist = UncertaintyDistribution(
+        pred_mean=3.0,
+        pred_std=2.0,
+        quantiles={"p10": 1.0, "p25": 2.0, "p50": 3.0, "p75": 4.0, "p90": 6.0},
+    )
+    assert dist.confidence_interval(0.80) == (1.0, 6.0)
+    lower, upper = dist.confidence_interval(0.99)
+    assert lower == pytest.approx(3.0 - 2.5758 * 2.0, abs=1e-3)
+    assert upper == pytest.approx(3.0 + 2.5758 * 2.0, abs=1e-3)

@@ -8,6 +8,7 @@ prediction residuals and simple parametric alternatives.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from statistics import NormalDist
 from typing import Any
 
 import numpy as np
@@ -46,7 +47,6 @@ class UncertaintyDistribution:
         
         For empirical distributions with quantiles, uses linear interpolation
         between quantile points. Falls back to Gaussian if quantiles unavailable.
-        All samples are clipped to non-negative values (FPL points cannot be < 0).
         
         Args:
             n: Number of samples to generate.
@@ -73,8 +73,7 @@ class UncertaintyDistribution:
         else:
             samples = np.full(n, self.pred_mean, dtype=np.float64)
         
-        # FPL points cannot be negative
-        return np.maximum(samples, 0.0)
+        return samples
     
     def _sample_from_quantiles(
         self,
@@ -166,35 +165,15 @@ class UncertaintyDistribution:
                     available_quantiles[q_level] = value
             
             if available_quantiles:
-                # Find closest available quantiles to desired levels
-                available_levels = sorted(available_quantiles.keys())
-                
-                # Find closest level to lower_p (should be around alpha/2)
-                lower_level = min(available_levels, key=lambda x: abs(x - lower_p))
-                # Find closest level to upper_p (should be around 1 - alpha/2)
-                upper_level = min(available_levels, key=lambda x: abs(x - upper_p))
-                
-                # Only use if they're distinct and roughly symmetric
-                if lower_level < upper_level:
-                    return (available_quantiles[lower_level], available_quantiles[upper_level])
+                lower = next((v for q, v in available_quantiles.items() if abs(q - lower_p) < 1e-9), None)
+                upper = next((v for q, v in available_quantiles.items() if abs(q - upper_p) < 1e-9), None)
+                if lower is not None and upper is not None:
+                    return (lower, upper)
         
         # Fall back to Gaussian approximation using standard normal quantiles
         if self.pred_std is not None and self.pred_std > 0:
-            # Approximate standard normal quantiles (no scipy dependency)
-            # Using common approximations:
-            # p=0.05 -> ~-1.645, p=0.95 -> ~1.645 (for 90% CI)
-            # p=0.025 -> ~-1.96, p=0.975 -> ~1.96 (for 95% CI)
-            z_scores = {
-                0.80: 1.282,
-                0.90: 1.645,
-                0.95: 1.960,
-                0.99: 2.576,
-            }
-            # Find closest confidence level
-            closest_level = min(z_scores.keys(), key=lambda x: abs(x - level))
-            z = z_scores[closest_level]
-            margin = z * self.pred_std
-            return (max(0.0, self.pred_mean - margin), self.pred_mean + margin)
+            margin = NormalDist().inv_cdf(upper_p) * self.pred_std
+            return (self.pred_mean - margin, self.pred_mean + margin)
         
         # No uncertainty - return point estimate
         return (self.pred_mean, self.pred_mean)
@@ -314,7 +293,7 @@ def estimate_from_residuals(
     quantiles = {}
     for level in quantile_levels:
         residual_quantile = np.quantile(residuals, level)
-        quantiles[f"p{int(level * 100):02d}"] = max(0.0, pred_mean + residual_quantile)
+        quantiles[f"p{int(level * 100):02d}"] = pred_mean + float(residual_quantile)
     
     return UncertaintyDistribution(
         pred_mean=pred_mean,

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import unittest
+
+import pytest
 from planning.actions import ChipAction, GWPlan, LineupAction, TransferAction
 from planning.objective import PlanningObjective
 from planning.search import PlanningSearch
@@ -306,6 +308,48 @@ def test_transfers():
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     assert result.wasSuccessful()
+
+
+def _squad_state(budget: float) -> tuple[PlanningState, dict[str, Player], LineupAction]:
+    positions = ["GK"] * 2 + ["DEF"] * 5 + ["MID"] * 5 + ["FWD"] * 3
+    players = [Player(f"p{i}", f"p{i}", pos, f"T{i}", 5.0) for i, pos in enumerate(positions)]
+    state = PlanningState(
+        gameweek=1,
+        squad=Squad(players).to_state_squad(),
+        budget=budget,
+        free_transfers=1,
+    )
+    lineup = LineupAction(starting_xi=[p.player_id for p in players[:1] + players[2:12]], captain="p7", vice_captain="p8")
+    return state, {p.player_id: p for p in players}, lineup
+
+
+def test_transition_fn_rejects_buying_player_already_owned():
+    state, registry, lineup = _squad_state(budget=1.0)
+    plan = GWPlan(transfers=[TransferAction(player_out="p2", player_in="p3")], lineup=lineup)
+    with pytest.raises(ValueError, match="already in current squad"):
+        transition_fn(state, plan, player_registry=registry)
+
+
+def test_transition_fn_rejects_overspend():
+    state, registry, lineup = _squad_state(budget=0.5)
+    registry["star"] = Player("star", "star", "DEF", "LIV", 15.0)
+    plan = GWPlan(transfers=[TransferAction(player_out="p2", player_in="star")], lineup=lineup)
+    with pytest.raises(ValueError, match="overspend"):
+        transition_fn(state, plan, player_registry=registry)
+
+
+def test_validate_transfers_ignores_unknown_club_for_club_limit():
+    positions = ["GK"] * 2 + ["DEF"] * 5 + ["MID"] * 5 + ["FWD"] * 3
+    squad = [Player(f"p{i}", f"p{i}", pos, f"T{i}", 5.0) for i, pos in enumerate(positions)]
+    transfers = [TransferAction(player_out=f"p{i}", player_in=f"new{i}") for i in (2, 3, 7, 8)]
+    is_valid, errors = validate_transfers(squad, transfers, bank=0.0)
+    assert is_valid, errors
+
+
+def test_squad_from_state_without_registry_validates():
+    state, _, _ = _squad_state(budget=0.0)
+    is_valid, errors = Squad.from_state_squad(state.squad).validate()
+    assert is_valid, errors
 
 
 if __name__ == "__main__":

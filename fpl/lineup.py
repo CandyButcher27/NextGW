@@ -13,8 +13,6 @@ from .csp import (
     CSP,
     AllDifferentConstraint,
     CountConstraint,
-    backtracking_search,
-    mrv_heuristic,
 )
 from .rules import (
     DEFAULT_CONFIG,
@@ -190,15 +188,9 @@ def solve_optimal_lineup(
             best_score = score
             best_xi = selected_xi
 
-    # Fallback to CSP solver if simple formation iteration didn't find one
     if not best_xi:
-        csp = create_lineup_formation_csp(positions, config)
-        sol = backtracking_search(csp, select_unassigned_variable=mrv_heuristic)
-        if sol:
-            best_xi = list(sol.values())
-        else:
-            # Emergency fallback: pick first 11
-            best_xi = list(positions.keys())[: config.starting_xi_size]
+        counts = {pos: len(pids) for pos, pids in by_pos.items()}
+        raise ValueError(f"Squad cannot field any legal formation: {counts}")
 
     # Bench: remaining 4 players
     starting_set = set(best_xi)

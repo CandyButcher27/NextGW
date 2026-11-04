@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import unittest
+
+import pytest
 from planning.actions import LineupAction
 from fpl.lineup import (
     Lineup,
@@ -95,6 +97,12 @@ def test_lineup():
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     assert result.wasSuccessful()
+
+
+def test_solve_optimal_lineup_raises_when_no_legal_formation():
+    all_keepers = {f"g{i}": "GK" for i in range(15)}
+    with pytest.raises(ValueError, match="cannot field any legal formation"):
+        solve_optimal_lineup(all_keepers, {})
 
 
 if __name__ == "__main__":

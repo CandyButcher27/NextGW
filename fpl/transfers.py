@@ -182,6 +182,10 @@ def transition_fn(
                 raise ValueError(
                     f"Cannot transfer out '{out_id}': player is not in current squad."
                 )
+            if in_id in squad_dict:
+                raise ValueError(
+                    f"Cannot transfer in '{in_id}': player is already in current squad."
+                )
 
             # Look up price and position
             out_pos = squad_dict.get(out_id, "MID")
@@ -205,6 +209,12 @@ def transition_fn(
 
             # Update bank budget
             new_budget = new_budget + out_price - in_price
+
+        if round(new_budget, 2) < 0:
+            raise ValueError(
+                f"Transfers overspend the bank: £{state.budget:.1f}m available, "
+                f"£{new_budget:.1f}m after transfers."
+            )
 
     # Roll free transfers
     # Official 2024/25+ & 2026/27 rule:
@@ -230,7 +240,7 @@ def transition_fn(
         final_budget = state.budget
     else:
         final_squad_tuple = tuple(sorted(squad_dict.items()))
-        final_budget = max(0.0, round(new_budget, 2))
+        final_budget = round(new_budget, 2)
 
     return PlanningState(
         gameweek=next_gw,

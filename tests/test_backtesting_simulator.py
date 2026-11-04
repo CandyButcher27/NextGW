@@ -80,15 +80,22 @@ def test_vice_captain_takes_armband_when_captain_does_not_play():
 
 def test_player_missing_from_gameweek_scores_zero():
     outcomes = gameweek_outcomes(make_data(), SEASON, 1)
-    result = score_gameweek(make_state(), plan(xi=("1", "99"), captain="99", vice="1"), outcomes, ScoringConfig())
+    gw_plan = plan(xi=("1", "99"), captain="99", vice="1", transfers=[("3", "99")])
+    result = score_gameweek(make_state(), gw_plan, outcomes, ScoringConfig())
     assert result["xi_points"] == 1.0
     assert result["captain_bonus"] == 1.0
 
 
 def test_transfers_beyond_free_transfers_cost_configured_hit():
     outcomes = gameweek_outcomes(make_data(), SEASON, 1)
-    gw_plan = plan(transfers=[("3", "4"), ("1", "5"), ("2", "6")])
-    result = score_gameweek(make_state(free_transfers=1), gw_plan, outcomes, ScoringConfig(transfer_hit_cost=3.0))
+    state = PlanningState(
+        gameweek=1,
+        squad=(("1", "MID"), ("2", "FWD"), ("3", "DEF"), ("7", "DEF"), ("8", "MID")),
+        budget=100.0,
+        free_transfers=1,
+    )
+    gw_plan = plan(transfers=[("3", "4"), ("7", "5"), ("8", "6")])
+    result = score_gameweek(state, gw_plan, outcomes, ScoringConfig(transfer_hit_cost=3.0))
     assert result["hits"] == 2
     assert result["hit_cost"] == 6.0
     assert result["gw_points"] == 11.0 + 10.0 - 6.0
@@ -154,12 +161,12 @@ def test_simulate_rejects_mismatched_initial_state_and_bad_range():
 
 def test_decision_is_logged_with_transfers_xi_and_armband():
     outcomes = gameweek_outcomes(make_data(), SEASON, 1)
-    gw_plan = plan(xi=("1", "2"), captain="2", vice="1", transfers=[("3", "4"), ("1", "5")])
+    gw_plan = plan(xi=("2", "5"), captain="2", vice="5", transfers=[("3", "4"), ("1", "5")])
     result = score_gameweek(make_state(free_transfers=2), gw_plan, outcomes, ScoringConfig())
     assert result["transfers"] == "3>4;1>5"
-    assert result["starting_xi"] == "1,2"
+    assert result["starting_xi"] == "2,5"
     assert result["captain_id"] == "2"
-    assert result["vice_captain_id"] == "1"
+    assert result["vice_captain_id"] == "5"
 
 
 def test_no_transfers_logs_empty_string():
@@ -173,3 +180,23 @@ def test_simulate_rejects_transition_that_does_not_advance_one_gameweek():
 
     with pytest.raises(ValueError, match="transition_fn"):
         simulate(FixedStrategy("fixed", plan()), make_data(), SEASON, 1, 3, make_state(), stuck)
+
+
+def test_rejects_starting_xi_outside_squad():
+    outcomes = gameweek_outcomes(make_data(), SEASON, 2)
+    with pytest.raises(ValueError, match="not in the squad"):
+        score_gameweek(make_state(2), plan(xi=("1", "99"), captain="1", vice="99"), outcomes, ScoringConfig())
+
+
+def test_accepts_player_bought_this_gameweek():
+    outcomes = gameweek_outcomes(make_data(), SEASON, 2)
+    result = score_gameweek(
+        make_state(2), plan(xi=("1", "4"), captain="1", vice="4", transfers=[("2", "4")]), outcomes, ScoringConfig()
+    )
+    assert result["xi_points"] == 2.0
+
+
+def test_rejects_captain_outside_starting_xi():
+    outcomes = gameweek_outcomes(make_data(), SEASON, 2)
+    with pytest.raises(ValueError, match="Captain"):
+        score_gameweek(make_state(2), plan(xi=("1", "2"), captain="3", vice="1"), outcomes, ScoringConfig())
