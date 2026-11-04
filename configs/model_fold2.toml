@@ -1,0 +1,19 @@
+name = "model-heldout-fold2"
+seasons = ["2023-24"]
+train_seasons = ["2022-23", "2023-24"]
+start_gw = 5
+end_gw = 38
+budget = 100.0
+squad_seeds = 6
+squad_noise = 0.3
+output_dir = "results"
+forecaster = "model"
+features = ["prediction.train HistGradientBoosting, frozen at start_gw, trained on earlier seasons + GW1-4"]
+
+# fold 2: transfer_value per strategy chosen on 2024-25 (3 squad seeds, values 0-3); 2023-24 held out
+transfer_value = 0.0
+
+[[planners]]
+horizon = 4
+discount = 1.0
+transfer_value = 1.0

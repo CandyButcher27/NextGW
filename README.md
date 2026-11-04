@@ -68,11 +68,45 @@ uv sync
 uv run pytest
 ```
 
-Data preparation, experiment and demo commands will be added here as each module lands.
+### Data
+
+Seasons come from [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League) (`data/<season>/gws/merged_gw.csv`) into `data/raw/<season>/merged_gw.csv`. `load_clean_player_gw_data(season)` fetches and cleans them. Where `raw.githubusercontent.com` is blocked, download through the GitHub API instead:
+
+```bash
+gh api -H "Accept: application/vnd.github.raw" repos/vaastav/Fantasy-Premier-League/contents/data/2024-25/gws/merged_gw.csv > data/raw/2024-25/merged_gw.csv
+```
+
+### Backtests
+
+```bash
+uv run python scripts/run_backtest.py configs/model.toml        # held-out 2024-25, ML forecasts
+uv run python scripts/run_backtest.py configs/model_fold2.toml  # held-out 2023-24, ML forecasts
+uv run python scripts/run_backtest.py configs/backtest.toml     # fixture-heuristic forecasts
+uv run python scripts/run_backtest.py configs/oracle.toml       # diagnostic only: leaks realised points
+```
+
+Each run writes `results/<name>/<season>/seed<n>/results.csv` and `metadata.json` and prints per-strategy totals, the paired gap to greedy, and secondary metrics.
 
 ## Status
 
-Early development: module scaffolding, team workflow and CI are in place; module implementations are in progress.
+End-to-end pipeline works: data, forecasts (fixture heuristic and ML model), FPL rules, 4-GW beam search, greedy and rule-based baselines, historical backtests and metrics. Not done yet: chips, automatic substitutions in scoring, risk-aware use of the uncertainty scenarios, dashboard.
+
+### Results so far
+
+Backtests replay GW5-38 from several initial squads per season (seeded noise on the squad-building forecast). Each strategy's tuning value (an opportunity cost per transfer) was chosen on the other season, so every number below is held out.
+
+| Held-out season | 4-GW planner | Greedy 1-GW | Rule-based | Planner - greedy (SE) | Planner wins |
+|---|---|---|---|---|---|
+| 2024-25 (`configs/model.toml`) | 1858 | 1748 | 1739 | +110 (24) | 6/6 |
+| 2023-24 (`configs/model_fold2.toml`) | 1831 | 1768 | 1630 | +64 (17) | 6/6 |
+
+Points are season totals over GW5-38 with ML forecasts. For 2024-25 the table shows the planner at the same transfer cost as greedy; the planner tuned to its own best cost scored 1864 (+116, SE 41, 5/6).
+
+What the experiments showed:
+- **Lookahead helps only with good forecasts.** With an oracle that knows realised points, the 4-GW planner beats greedy by about 440 points a season, so the search is sound. With the fixture-heuristic forecasts, which overpredict top players by about 50%, the planner trails greedy by about 105 points a season (held out).
+- **Free transfers are not free.** Without a per-transfer opportunity cost, calibrated ML forecasts made both strategies churn on small, noisy gains.
+- **No gain from:** discounting later Gameweeks, 2-transfer moves, or retraining the model during the season (each tested on a dev season and recorded in the PRs).
+- **Runtime:** about 0.4 s per 4-GW decision versus 0.02 s for greedy.
 
 | Weeks | Milestone |
 |---|---|
