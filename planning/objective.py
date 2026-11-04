@@ -13,6 +13,7 @@ class PlanningObjective:
         point_forecasts: Mapping[int, Mapping[str, float]],
         transfer_cost: float = 4.0,
         discount: float = 1.0,
+        transfer_value: float = 0.0,
     ) -> None:
         """
         Args:
@@ -22,6 +23,7 @@ class PlanningObjective:
         self.point_forecasts = point_forecasts
         self.transfer_cost = transfer_cost
         self.discount = discount
+        self.transfer_value = transfer_value
         self.first_gameweek = min(point_forecasts, default=0)
 
     def calculate_gw_utility(self, state: PlanningState, plan: GWPlan) -> float:
@@ -48,6 +50,7 @@ class PlanningObjective:
         if num_transfers > state.free_transfers:
             cost = (num_transfers - state.free_transfers) * self.transfer_cost
             
+        cost += num_transfers * self.transfer_value
         return (xi_points - cost) * self.discount ** (gw - self.first_gameweek)
 
     def calculate_total_utility(

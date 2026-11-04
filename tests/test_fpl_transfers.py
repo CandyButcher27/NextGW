@@ -363,5 +363,27 @@ def test_candidates_rank_transfers_by_ranking_points():
     assert [t.player_in for plan in plans for t in plan.transfers] == ["later"]
 
 
+def test_two_transfer_candidates_respect_joint_budget():
+    state, registry, _ = _squad_state(budget=0.0)
+    pool = [
+        Player("mid_a", "mid_a", "MID", "X", 6.0),
+        Player("fwd_a", "fwd_a", "FWD", "Y", 6.0),
+        Player("fwd_cheap", "fwd_cheap", "FWD", "Z", 4.0),
+    ]
+    points = {"mid_a": 9.0, "fwd_a": 9.0, "fwd_cheap": 8.0}
+    plans = generate_candidate_plans(state, candidate_pool=pool, expected_points=points, player_registry=registry, max_transfers=2)
+    doubles = [{t.player_in for t in plan.transfers} for plan in plans if len(plan.transfers) == 2]
+    assert doubles == [{"mid_a", "fwd_cheap"}]
+    for plan in plans:
+        transition_fn(state, plan, player_registry=registry | {p.player_id: p for p in pool})
+
+
+def test_single_transfer_limit_by_default():
+    state, registry, _ = _squad_state(budget=5.0)
+    pool = [Player("mid_a", "mid_a", "MID", "X", 5.0), Player("fwd_a", "fwd_a", "FWD", "Y", 5.0)]
+    plans = generate_candidate_plans(state, candidate_pool=pool, expected_points={"mid_a": 9.0, "fwd_a": 9.0}, player_registry=registry)
+    assert max(len(plan.transfers) for plan in plans) == 1
+
+
 if __name__ == "__main__":
     unittest.main()

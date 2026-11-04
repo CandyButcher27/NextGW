@@ -357,6 +357,7 @@ def generate_candidate_plans(
     for pos in pool_by_pos:
         pool_by_pos[pos].sort(key=lambda p: rank.get(p.player_id, 0.0), reverse=True)
 
+    singles: list[tuple[Player, Player]] = []
     for pos, squad_pids in squad_by_pos.items():
         if not squad_pids or not pool_by_pos[pos]:
             continue
@@ -366,6 +367,8 @@ def generate_candidate_plans(
         out_player = squad_players_map[out_pid]
         out_price = out_player.price
         available_funds = float(state.budget) + out_price
+
+        singles.extend((out_player, p) for p in pool_by_pos[pos][:top_k_candidates])
 
         added_for_pos = 0
         for in_player in pool_by_pos[pos]:
@@ -402,6 +405,38 @@ def generate_candidate_plans(
                 )
             )
             added_for_pos += 1
+
+    if max_transfers >= 2:
+        pairs = []
+        for i, (out_a, in_a) in enumerate(singles):
+            for out_b, in_b in singles[i + 1 :]:
+                if out_a.position == out_b.position:
+                    continue
+                if in_a.price + in_b.price > float(state.budget) + out_a.price + out_b.price + 1e-6:
+                    continue
+                clubs = Counter(current_club_counts)
+                clubs.subtract([out_a.team, out_b.team])
+                clubs.update([in_a.team, in_b.team])
+                if any(n > config.max_players_per_club for team, n in clubs.items() if team and team != "UNK"):
+                    continue
+                gain = sum(rank.get(p.player_id, 0.0) for p in (in_a, in_b)) - sum(rank.get(p.player_id, 0.0) for p in (out_a, out_b))
+                pairs.append((gain, out_a, in_a, out_b, in_b))
+        pairs.sort(key=lambda pair: pair[0], reverse=True)
+        for _, out_a, in_a, out_b, in_b in pairs[:top_k_candidates]:
+            new_squad = dict(squad_dict)
+            for out_p, in_p in ((out_a, in_a), (out_b, in_b)):
+                del new_squad[out_p.player_id]
+                new_squad[in_p.player_id] = in_p.position
+            candidates.append(
+                GWPlan(
+                    transfers=[
+                        TransferAction(player_out=out_a.player_id, player_in=in_a.player_id),
+                        TransferAction(player_out=out_b.player_id, player_in=in_b.player_id),
+                    ],
+                    lineup=solve_optimal_lineup(new_squad, pts, config).to_action(),
+                    chip=None,
+                )
+            )
 
     return candidates
 

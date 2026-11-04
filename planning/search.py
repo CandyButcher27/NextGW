@@ -25,11 +25,13 @@ class PlanningSearch:
         *,
         candidate_pool: Sequence[Player] | None = None,
         player_registry: Mapping[str, Player] | None = None,
+        max_transfers: int = 1,
     ) -> None:
         self.objective = objective
         self.beam_width = beam_width
         self.horizon = horizon
         self.best_utility: float | None = None
+        self.max_transfers = max_transfers
         self.candidate_pool = tuple(candidate_pool) if candidate_pool is not None else None
         self.player_registry = {
             str(player_id): player
@@ -113,4 +115,5 @@ class PlanningSearch:
             expected_points=self.objective.point_forecasts.get(state.gameweek, {}),
             player_registry=self.player_registry,
             ranking_points=remaining,
+            max_transfers=self.max_transfers,
         )
