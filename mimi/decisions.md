@@ -7,37 +7,37 @@ Reverse if: <condition that would change the answer>
 Date:
 Never edit an old entry's reasoning. Add a new one and mark the old "Superseded by DEC-<m>". -->
 
-## DEC-AS-1 — mimi/ is committed, not git-ignored
+## DEC-AS-1 — mimi/ is committed
 Why: 8 people each run their own agent; memory only helps if every clone sees the same bugs, decisions and state. Told by Aryaman 2026-09-30.
 Rejected: mimi default (git-ignored, per-machine) — each member's agent would start blind to the others' work.
 Reverse if: mimi/STATE.md merge conflicts cost more than the shared memory saves.
 Date: 2026-09-30
 
-## DEC-AS-2 — AGENTS.md is the single rulebook; CLAUDE.md only imports it
+## DEC-AS-2 — AGENTS.md is the rulebook
 Why: most of the team uses Codex or OpenCode, which read AGENTS.md natively; one file avoids two rulebooks drifting. Told by Aryaman 2026-09-30.
 Rejected: rules in CLAUDE.md with AGENTS.md pointing to it — Codex/OpenCode would read a pointer, not the rules.
 Reverse if: the team standardises on Claude Code only.
 Date: 2026-09-30
 
-## DEC-AS-3 — Merges gated by CI + Claude review, 0 human approvals
+## DEC-AS-3 — Merge gate: CI + Claude review
 Why: Aryaman expects teammates will not review each other's PRs. `ci` (pytest + path ownership from .github/CODEOWNERS) and `review` (claude-code-action against AGENTS.md) are required checks on main instead.
 Rejected: GitHub "require review from code owners" — the PR author cannot approve their own PR, so every merge would wait on a reluctant human reviewer.
 Reverse if: the team starts reviewing reliably, or the Claude review produces false blocks often enough to stall work.
 Date: 2026-09-30
 
-## DEC-AS-4 — Members run mimi close themselves
+## DEC-AS-4 — Members run mimi close
 Why: Aryaman chose to instruct members directly (told 2026-09-30).
 Rejected: AGENTS.md rule "run mimi-close before every push/PR" — offered, declined.
 Reverse if: mimi/STATE.md goes stale because members forget.
 Date: 2026-09-30
 
-## DEC-HG-1 — Data Engineering public interface and player-GW schema
+## DEC-HG-1 — Data API and player-GW schema
 Why: prediction, fpl, and backtesting need a standardized, leakage-safe player-gameweek dataset. Standardized functions: `load_clean_player_gw_data(season, processed_dir, raw_dir, allow_synthetic=False, auto_fetch=True)`, `load_synthetic_player_gw_data(season, ...)`, `clean_raw_merged_gw(raw_df, season)`, `validate_player_gameweek_df(df)`, `compute_leakage_safe_lags(df, stat_cols, lags, rolling_windows)`, `get_pre_deadline_history(df, season, gw)`, `verify_no_future_leakage(feature_df, target_season, target_gw, forbidden_cols, allowed_target_cols)`. Synthetic data is strictly opt-in (`allow_synthetic=False`) to avoid accidental model training on noise. Schema includes identifiers, metadata, fixture details, and performance stats. DGWs aggregated to single GW records with matches_in_gw count.
 Rejected: unaggregated fixture-level rows without GW rollup; silent fallback to synthetic data when raw files missing.
 Reverse if: downstream models require within-GW sequential match forecasting.
 Date: 2026-10-01
 
-## DEC-JD-1 — PROPOSED — pending consumer sign-off: prediction API and uncertainty output
+## DEC-JD-1 — PROPOSED: prediction API
 Status: PROPOSED — pending consumer sign-off from planning and other consumers.
 API:
 - `Predictor.load(path)` loads the predictor artifact.
@@ -56,31 +56,31 @@ Rejected: Treating the interface or intervals as approved/calibrated — consume
 Reverse if: Consumer owners agree a different signature, return shape, or uncertainty representation.
 Date: 2026-10-02
 
-## DEC-AS-5 — PRs auto-merge; nobody merges by hand
+## DEC-AS-5 — PRs auto-merge
 Why: Aryaman wants the workflow hands-off and does not want to watch PRs (told 2026-10-02). PR #6 sat green until someone merged it. Repo auto-merge was enabled and AGENTS.md section 6 now requires `gh pr merge --auto --squash` right after `gh pr create` (PR #7).
 Rejected: require 1 approval from CandyButcher27 so only he merges — puts him back in the loop on every PR. Restricting who may merge — not available on a user-owned repo.
 Reverse if: a PR merges that should not have, because the Claude review approved something wrong.
 Date: 2026-10-02
 
-## DEC-AS-6 — Session state is per person; mimi/STATE.md is team-level
+## DEC-AS-6 — Per-person session state
 Why: every mimi-close overwrote the single shared mimi/STATE.md, so every PR conflicted on it, and PR #9 corrupted a teammate's line while rewriting it. Each person now writes only `mimi/state/<github-username>.md`; `mimi/STATE.md` keeps goal, deployment and team threads; since DEC-AS-8 anyone may edit it. CODEOWNERS enforces the personal files through the `ci` ownership check.
 Rejected: keep one STATE.md with "edit only your own lines" — tried in AGENTS.md, conflicts and corruption continued. A union merge driver in .gitattributes — silently duplicates or interleaves sections.
 Reverse if: mimi-close gains native per-user state, or the team shrinks to one or two people.
 Date: 2026-10-03
 
-## DEC-AS-7 — Agents identify the user via `gh`, then follow teammates/<user>.md
+## DEC-AS-7 — Agents identify user via gh
 Why: teammates' agents closed blocked PRs and opened new ones for the same work (#5 → #6, #9 → #10), and kept committing on merged branches. Each person now has `teammates/<github-username>.md` (owned paths, dependencies, past mistakes) plus a shared `teammates/PLAYBOOK.md` with exact PR, conflict and CI-failure steps. Session start resumes the user's open PR instead of starting a new one (PR #13, commit 10b7149).
 Rejected: identifying the user from the branch prefix — wrong on `main` or on a reused branch, and the agent guessed. Keeping all per-person detail in AGENTS.md — too long to follow reliably.
 Reverse if: `gh` is unavailable to a teammate's agent, or the guides drift from CODEOWNERS.
 Date: 2026-10-03
 
-## DEC-AS-8 — Anyone may edit mimi/STATE.md
+## DEC-AS-8 — Anyone may edit STATE.md
 Why: the CandyButcher27-only rule failed the `ci` ownership check on PR #15 for a teammate who only touched STATE.md, and Aryaman wanted it open to everyone (2026-10-12). CODEOWNERS no longer has a STATE.md line, so the `/mimi/` team rule applies (PR #16). Personal `mimi/state/<github-username>.md` files stay single-writer.
 Rejected: admin-merging blocked PRs case by case — keeps Aryaman in the loop. Loosening the ownership check itself — it is what stops cross-module edits.
 Reverse if: STATE.md conflicts or overwritten team lines come back, as before DEC-AS-6.
 Date: 2026-10-12
 
-## DEC-TA-1 — PROPOSED: backtest simulator interface
+## DEC-TA-1 — PROPOSED: backtest simulator API
 Status: PROPOSED — pending sign-off from print-tanish (metrics), Vidhan-J28 (planner as a strategy) and TarunPK15 (transition_fn).
 API (`backtesting/simulator.py`, `backtesting/experiments.py`):
 - `Strategy` protocol: attribute `name: str`, method `decide(state: PlanningState, history: pd.DataFrame, season: str, gameweek: int) -> GWPlan`. `history` is `data.get_pre_deadline_history(data, season, gameweek)`: no rows from the decision Gameweek or later.
@@ -95,14 +95,14 @@ Rejected: re-implementing squad/formation/autosub rules in backtesting/ — AGEN
 Reverse if: consumer owners agree a different strategy signature or result columns.
 Date: 2026-10-14
 
-## DEC-VJ-1 — Defer transfer search while preserving the planner inputs
+## DEC-VJ-1 — Transfer search deferred
 Why: `plan(current_state, scenarios, transition_fn)` receives player points but no transfer-market player metadata such as position, price, or club. On 2026-11-03 Vidhan-J28 chose to keep this signature and use legal no-transfer plans for the current milestone.
 Rejected: adding `candidate_pool` and `player_registry` arguments to `plan()` in this change — the user asked to keep the existing signature.
 Reverse if: the planning and consuming owners agree on a route for supplying transfer-market metadata.
 Date: 2026-11-03
 Superseded by DEC-VJ-2
 
-## DEC-VJ-2 — Pass transfer-market metadata as optional planner inputs
+## DEC-VJ-2 — Market metadata as optional planner inputs
 Why: The planner needs candidate positions, clubs, and prices to generate legal transfers. Vidhan-J28 reported that the backtesting consumer agreed to additive keyword-only `candidate_pool` and `player_registry` inputs on 2026-11-03; existing calls remain compatible.
 Rejected: placing the player catalog inside scenario samples or planning state — these values describe the transfer market, not forecast outcomes or the manager's current state.
 Reverse if: an agreed public catalog provider can supply deadline-safe metadata without planner call-site inputs.
