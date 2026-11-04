@@ -1,8 +1,8 @@
 """Historical Gameweek replay: strategies decide before each deadline, real outcomes score them.
 
-The simulator does not check FPL legality (squad, formation, budget, club limits) and does not
-apply automatic substitutions. Both belong to the ``fpl`` module; until it lands, legality is
-whatever ``transition_fn`` enforces. Chips are not supported yet.
+The simulator checks only that the starting XI, captain and vice-captain come from the
+post-transfer squad. Other FPL legality (formation, budget, club limits) is whatever
+``transition_fn`` enforces, and automatic substitutions are not applied. Chips are not supported yet.
 """
 
 from __future__ import annotations
@@ -100,6 +100,15 @@ def score_gameweek(
         return key in outcomes.index and float(outcomes.at[key, "minutes"]) > 0
 
     lineup = plan.lineup
+    squad = {str(item[0]) if isinstance(item, (tuple, list)) else str(item) for item in state.squad}
+    squad -= {str(t.player_out) for t in plan.transfers}
+    squad |= {str(t.player_in) for t in plan.transfers}
+    xi = {str(pid) for pid in lineup.starting_xi}
+    if not xi <= squad:
+        raise ValueError(f"Starting XI has players not in the squad: {sorted(xi - squad)}")
+    if str(lineup.captain) not in xi or str(lineup.vice_captain) not in xi:
+        raise ValueError("Captain and vice-captain must be in the starting XI")
+
     xi_points = sum(points(pid) for pid in lineup.starting_xi)
     captain_played = played(lineup.captain)
     armband = lineup.captain if captain_played else lineup.vice_captain
