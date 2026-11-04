@@ -282,8 +282,8 @@ def load_clean_player_gw_data(
 
 def load_synthetic_player_gw_data(
     season: str = "2023-24",
-    processed_dir: Path | str = "data/processed",
-    raw_dir: Path | str = "data/raw",
+    processed_dir: Path | str = "data/processed/synthetic",
+    raw_dir: Path | str = "data/raw/synthetic",
     num_players: int = 40,
     num_gws: int = 38,
     seed: int = 42,

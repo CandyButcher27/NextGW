@@ -214,3 +214,14 @@ def test_load_synthetic_player_gw_data_explicit(tmp_path: Path):
     )
     assert len(df) == 8 * 3
     assert validate_player_gameweek_df(df).is_valid
+
+
+def test_load_synthetic_default_paths_never_touch_real_data(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    real_raw = tmp_path / "data" / "raw" / "2023-24" / "merged_gw.csv"
+    real_raw.parent.mkdir(parents=True)
+    real_raw.write_text("real", encoding="utf-8")
+    load_synthetic_player_gw_data(season="2023-24", num_players=8, num_gws=3)
+    assert real_raw.read_text(encoding="utf-8") == "real"
+    assert not (tmp_path / "data" / "processed" / "players_gw_2023-24.csv").exists()
+
