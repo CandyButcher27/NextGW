@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import partial
 
 import pandas as pd
 
-from baselines.common import active_pool, form_forecast, player_registry
+from baselines.common import active_pool, player_registry
 from fpl.transfers import transition_fn
 from planning.actions import GWPlan
 from planning.objective import PlanningObjective
 from planning.search import PlanningSearch
 from planning.state import PlanningState
-
-Forecaster = Callable[[pd.DataFrame, str, int, int], dict[int, dict[str, float]]]
+from prediction.form_forecast import Forecaster, form_forecast
 
 
 @dataclass

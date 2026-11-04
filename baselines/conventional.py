@@ -5,7 +5,8 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from baselines.common import active_pool, player_registry, recent_minutes, rolling_form, squad_ids
+from baselines.common import active_pool, player_registry, recent_minutes, squad_ids
+from prediction.form_forecast import rolling_form
 from fpl.lineup import solve_optimal_lineup
 from fpl.rules import DEFAULT_CONFIG, FPLRulesConfig
 from planning.actions import GWPlan, TransferAction

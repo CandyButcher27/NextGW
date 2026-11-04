@@ -7,6 +7,7 @@ from fpl.squad import Player
 from fpl.transfers import transition_fn
 
 
+
 def player_registry(history: pd.DataFrame, season: str) -> dict[str, Player]:
     rows = history.loc[history["season"] == season].sort_values("gameweek")
     latest = rows.groupby("player_id").tail(1)
@@ -23,18 +24,6 @@ def active_pool(history: pd.DataFrame, season: str, registry: dict[str, Player])
     last_gw = rows["gameweek"].max()
     active = rows.loc[rows["gameweek"] == last_gw, "player_id"].astype(str).unique()
     return [registry[pid] for pid in active]
-
-
-def rolling_form(history: pd.DataFrame, season: str, window: int) -> dict[str, float]:
-    rows = history.loc[history["season"] == season]
-    per_gw = rows.groupby(["player_id", "gameweek"])["total_points"].sum().reset_index()
-    recent = per_gw.sort_values("gameweek").groupby("player_id").tail(window)
-    return {str(pid): float(pts) for pid, pts in recent.groupby("player_id")["total_points"].mean().items()}
-
-
-def form_forecast(history: pd.DataFrame, season: str, gameweek: int, horizon: int, window: int = 4) -> dict[int, dict[str, float]]:
-    form = rolling_form(history, season, window)
-    return {gw: form for gw in range(gameweek, gameweek + horizon)}
 
 
 def backtest_transition(data: pd.DataFrame, season: str):
