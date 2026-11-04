@@ -107,3 +107,15 @@ Why: The planner needs candidate positions, clubs, and prices to generate legal 
 Rejected: placing the player catalog inside scenario samples or planning state — these values describe the transfer market, not forecast outcomes or the manager's current state.
 Reverse if: an agreed public catalog provider can supply deadline-safe metadata without planner call-site inputs.
 Date: 2026-11-03
+
+## DEC-AS-9 — Forecaster interface for strategies
+Status: decided by CandyButcher27 as co-owner of baselines, planning, fpl and prediction (other owners inactive, 2026-11-04).
+API:
+- `prediction.form_forecast.Forecaster = Callable[[history, season, gameweek, horizon], dict[int, dict[str, float]]]`: expected points per GW in `gameweek..gameweek+horizon-1`, keyed by str player_id, built from `history` (pre-deadline rows) plus schedule-only fixture data.
+- `form_forecast` and `fixture_forecaster(schedule)` implement it. `rolling_form` moved from `baselines.common` to `prediction.form_forecast`; no other caller used it.
+- `planning.strategy.PlannerStrategy(name, horizon, beam_width, transfer_cost, forecaster)` is a simulator `Strategy`. `baselines.greedy.GreedyStrategy(**kw)` returns it with `horizon=1`.
+- `fpl.transfers.generate_candidate_plans(..., ranking_points=None)`: additive keyword; picks sells and buys by `ranking_points` (default `expected_points`). Lineups always use `expected_points`.
+Why: planner and greedy must share one forecast so they differ only in lookahead. Ranking only by the current GW made the 4-GW search stack myopic moves (2024-25: planner 1804 -> 1922 pts with window ranking).
+Rejected: the DEC-JD-1 `Predictor` as the only forecast source — it needs a trained artifact; it can be wrapped as a `Forecaster` later. DEC-JD-1 still covers the prediction API.
+Reverse if: strategies need distributions rather than point forecasts; then the forecaster returns scenarios instead.
+Date: 2026-11-04

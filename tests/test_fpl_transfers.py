@@ -352,10 +352,6 @@ def test_squad_from_state_without_registry_validates():
     assert is_valid, errors
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 def test_candidates_rank_transfers_by_ranking_points():
     state, registry, _ = _squad_state(budget=1.0)
     pool = [Player("now", "now", "MID", "X", 5.0), Player("later", "later", "MID", "Y", 5.0)]
@@ -365,3 +361,7 @@ def test_candidates_rank_transfers_by_ranking_points():
         state, candidate_pool=pool, expected_points=this_gw, player_registry=registry, top_k_candidates=1, ranking_points=window
     )
     assert [t.player_in for plan in plans for t in plan.transfers] == ["later"]
+
+
+if __name__ == "__main__":
+    unittest.main()
