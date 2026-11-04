@@ -1,23 +1,23 @@
 *                           @CandyButcher27
 
-/data/                      @Harsh1331
-/tests/test_data_*          @Harsh1331
-/prediction/                @djahnavi180506
-/tests/test_prediction_*    @djahnavi180506
-/uncertainty/               @hritikshukla144
-/tests/test_uncertainty_*   @hritikshukla144
-/fpl/                       @TarunPK15
-/tests/test_fpl_*           @TarunPK15
-/planning/                  @Vidhan-J28
-/tests/test_planning_*      @Vidhan-J28
-/baselines/                 @TA619
-/backtesting/__init__.py    @TA619 @print-tanish
-/backtesting/simulator.py   @TA619
-/backtesting/experiments.py @TA619
-/tests/test_baselines_*     @TA619
-/tests/test_backtesting_*   @TA619
-/backtesting/metrics.py     @print-tanish
-/tests/test_metrics_*       @print-tanish
+/data/                      @Harsh1331 @CandyButcher27
+/tests/test_data_*          @Harsh1331 @CandyButcher27
+/prediction/                @djahnavi180506 @CandyButcher27
+/tests/test_prediction_*    @djahnavi180506 @CandyButcher27
+/uncertainty/               @hritikshukla144 @CandyButcher27
+/tests/test_uncertainty_*   @hritikshukla144 @CandyButcher27
+/fpl/                       @TarunPK15 @CandyButcher27
+/tests/test_fpl_*           @TarunPK15 @CandyButcher27
+/planning/                  @Vidhan-J28 @CandyButcher27
+/tests/test_planning_*      @Vidhan-J28 @CandyButcher27
+/baselines/                 @TA619 @CandyButcher27
+/backtesting/__init__.py    @TA619 @print-tanish @CandyButcher27
+/backtesting/simulator.py   @TA619 @CandyButcher27
+/backtesting/experiments.py @TA619 @CandyButcher27
+/tests/test_baselines_*     @TA619 @CandyButcher27
+/tests/test_backtesting_*   @TA619 @CandyButcher27
+/backtesting/metrics.py     @print-tanish @CandyButcher27
+/tests/test_metrics_*       @print-tanish @CandyButcher27
 
 /notebooks/Harsh1331_*       @Harsh1331
 /notebooks/djahnavi180506_*  @djahnavi180506

@@ -6,9 +6,9 @@ RULES = parse(Path(".github/CODEOWNERS").read_text(encoding="utf-8"))
 
 
 def test_module_owner_and_default():
-    assert owners(RULES, "fpl/rules.py") == {"tarunpk15"}
-    assert owners(RULES, "tests/test_fpl_squad.py") == {"tarunpk15"}
-    assert owners(RULES, "backtesting/metrics.py") == {"print-tanish"}
+    assert owners(RULES, "fpl/rules.py") == {"tarunpk15", "candybutcher27"}
+    assert owners(RULES, "tests/test_fpl_squad.py") == {"tarunpk15", "candybutcher27"}
+    assert owners(RULES, "backtesting/metrics.py") == {"print-tanish", "candybutcher27"}
     assert owners(RULES, "dashboard/app.py") == {"candybutcher27"}
 
 
@@ -27,3 +27,7 @@ def test_foreign_paths_rejected():
 def test_state_files_are_personal():
     assert violations(RULES, "Harsh1331", ["mimi/STATE.md", "mimi/state/Vidhan-J28.md"]) == ["mimi/state/Vidhan-J28.md"]
     assert violations(RULES, "CandyButcher27", ["mimi/STATE.md", "mimi/state/Harsh1331.md"]) == []
+
+
+def test_admin_may_edit_every_module():
+    assert violations(RULES, "CandyButcher27", ["fpl/rules.py", "baselines/greedy.py", "tests/test_metrics_core.py"]) == []
