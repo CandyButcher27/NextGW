@@ -1,0 +1,19 @@
+name = "model"
+seasons = ["2023-24", "2024-25"]
+train_seasons = ["2022-23", "2023-24"]
+start_gw = 5
+end_gw = 38
+budget = 100.0
+squad_seeds = 6
+squad_noise = 0.3
+output_dir = "results"
+forecaster = "model"
+features = ["prediction.train HistGradientBoosting, frozen at start_gw, trained on earlier seasons + GW1-4"]
+
+[[planners]]
+horizon = 4
+discount = 1.0
+
+[[planners]]
+horizon = 4
+discount = 0.7

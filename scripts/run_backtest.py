@@ -14,7 +14,8 @@ from data import get_pre_deadline_history, load_clean_player_gw_data
 from fpl.squad import greedy_squad
 from planning.state import PlanningState
 from planning.strategy import PlannerStrategy
-from prediction.form_forecast import fixture_forecaster, fixture_schedule, form_forecast
+from prediction.form_forecast import fixture_forecaster, fixture_schedule, form_forecast, model_forecaster
+from prediction.train import train_model
 
 
 def oracle_forecaster(data: pd.DataFrame):
@@ -24,16 +25,24 @@ def oracle_forecaster(data: pd.DataFrame):
     return lambda history, season, gameweek, horizon: {gw: by_gw.get(gw, {}) for gw in range(gameweek, gameweek + horizon)}
 
 
-def run_season(config: dict, season: str, seed: int) -> pd.DataFrame:
+def season_forecaster(config: dict, season: str, data: pd.DataFrame):
+    kind = config["forecaster"]
+    if kind == "form":
+        return form_forecast
+    if kind == "fixture":
+        return fixture_forecaster(fixture_schedule(data))
+    if kind == "oracle":
+        return oracle_forecaster(data)
+    earlier = [s for s in config["train_seasons"] if s < season]
+    training = pd.concat([*(load_clean_player_gw_data(season=s, auto_fetch=False) for s in earlier), data], ignore_index=True)
+    model = train_model(training, as_of_season=season, as_of_gameweek=config["start_gw"])
+    return model_forecaster(model, fixture_schedule(data))
+
+
+def run_season(config: dict, season: str, seed: int, data: pd.DataFrame, forecaster) -> pd.DataFrame:
     start_gw = config["start_gw"]
-    data = load_clean_player_gw_data(season=season, auto_fetch=False)
     history = get_pre_deadline_history(data, current_season=season, current_gameweek=start_gw)
     registry = player_registry(history, season)
-    forecaster = {
-        "form": lambda: form_forecast,
-        "fixture": lambda: fixture_forecaster(fixture_schedule(data)),
-        "oracle": lambda: oracle_forecaster(data),
-    }[config["forecaster"]]()
     expected = fixture_forecaster(fixture_schedule(data))(history, season, start_gw, 1)[start_gw]
     if seed:
         rng = np.random.default_rng([seed, start_gw])
@@ -69,8 +78,11 @@ def main(config_path: str) -> None:
     started = time.time()
     runs = []
     for season in config["seasons"]:
+        data = load_clean_player_gw_data(season=season, auto_fetch=False)
+        forecaster = season_forecaster(config, season, data)
         for seed in range(config["squad_seeds"]):
-            runs.append(run_season(config, season, seed).assign(seed=seed))
+            runs.append(run_season(config, season, seed, data, forecaster).assign(seed=seed))
+            print(f"{season} seed {seed} done, {time.time() - started:.0f}s", flush=True)
     results = pd.concat(runs, ignore_index=True)
     totals = results.groupby(["strategy", "season", "seed"])["gw_points"].sum().unstack("strategy")
     baseline = totals["greedy"]
@@ -84,8 +96,7 @@ def main(config_path: str) -> None:
     )
     print(totals.groupby(level="season").mean().T.round(0).to_string())
     print(summary.sort_values("mean_per_season", ascending=False).round(1).to_string())
-    print(f"{len(totals)} runs (season x squad seed)")
-    print(f"{time.time() - started:.0f}s, results in {Path(config['output_dir']) / config['name']}")
+    print(f"{len(totals)} runs (season x squad seed), {time.time() - started:.0f}s")
 
 
 if __name__ == "__main__":
