@@ -7,6 +7,7 @@ post-transfer squad. Other FPL legality (formation, budget, club limits) is what
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Callable, Protocol
 
@@ -35,6 +36,7 @@ RESULT_COLUMNS: list[str] = [
     "captain_bonus",
     "gw_points",
     "cumulative_points",
+    "decision_seconds",
 ]
 
 
@@ -163,7 +165,9 @@ def simulate(
     rows: list[dict[str, object]] = []
     for gameweek in range(start_gw, end_gw + 1):
         history = get_pre_deadline_history(data, current_season=season, current_gameweek=gameweek)
+        started = time.perf_counter()
         plan = strategy.decide(state, history, season, gameweek)
+        decision_seconds = time.perf_counter() - started
         result = score_gameweek(state, plan, gameweek_outcomes(data, season, gameweek), scoring)
         cumulative += float(result["gw_points"])
         rows.append(
@@ -173,6 +177,7 @@ def simulate(
                 "gameweek": gameweek,
                 **result,
                 "cumulative_points": cumulative,
+                "decision_seconds": decision_seconds,
             }
         )
         state = transition_fn(state, plan)
