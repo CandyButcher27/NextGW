@@ -67,6 +67,8 @@ def run_season(config: dict, season: str, seed: int, data: pd.DataFrame, forecas
                     "name": f"planner-h{p['horizon']}-d{p.get('discount', 1.0)}",
                     "transfer_value": config.get("transfer_value", 0.0),
                     "max_transfers": config.get("max_transfers", 1),
+                    "chips": tuple(config.get("chips", ())),
+                    "chip_hold": config.get("chip_hold", {}),
                     **p,
                 },
             )
@@ -76,6 +78,8 @@ def run_season(config: dict, season: str, seed: int, data: pd.DataFrame, forecas
             forecaster=forecaster,
             transfer_value=config.get("transfer_value", 0.0),
             max_transfers=config.get("max_transfers", 1),
+            chips=tuple(config.get("chips", ())),
+            chip_hold=config.get("chip_hold", {}),
         ),
         ConventionalStrategy(),
     ]

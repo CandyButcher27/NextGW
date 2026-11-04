@@ -14,6 +14,7 @@ class PlanningObjective:
         transfer_cost: float = 4.0,
         discount: float = 1.0,
         transfer_value: float = 0.0,
+        chip_hold: Mapping[str, float] | None = None,
     ) -> None:
         """
         Args:
@@ -24,6 +25,7 @@ class PlanningObjective:
         self.transfer_cost = transfer_cost
         self.discount = discount
         self.transfer_value = transfer_value
+        self.chip_hold = dict(chip_hold or {})
         self.first_gameweek = min(point_forecasts, default=0)
 
     def calculate_gw_utility(self, state: PlanningState, plan: GWPlan) -> float:
@@ -51,6 +53,14 @@ class PlanningObjective:
             cost = (num_transfers - state.free_transfers) * self.transfer_cost
             
         cost += num_transfers * self.transfer_value
+
+        chip = plan.chip.chip_name if plan.chip else None
+        if chip == "TripleCaptain":
+            xi_points += forecasts.get(captain_id, 0.0)
+        elif chip == "BenchBoost":
+            xi_points += sum(forecasts.get(pid, 0.0) for pid in plan.lineup.bench)
+        if chip is not None:
+            cost += self.chip_hold.get(chip, 0.0)
         return (xi_points - cost) * self.discount ** (gw - self.first_gameweek)
 
     def calculate_total_utility(
