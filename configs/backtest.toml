@@ -1,0 +1,11 @@
+name = "mvp-form"
+season = "2024-25"
+start_gw = 5
+end_gw = 38
+budget = 100.0
+output_dir = "results"
+features = ["rolling_form_4gw"]
+
+[planner]
+horizon = 4
+beam_width = 10
