@@ -153,6 +153,10 @@ def transition_fn(
     """
     next_gw = state.gameweek + 1
     chip_name = plan.chip.chip_name if plan.chip else None
+    if chip_name is not None:
+        chip_ok, chip_errors = validate_chip(chip_name, state.chips_used, config)
+        if not chip_ok:
+            raise ValueError("; ".join(chip_errors))
 
     # Parse current squad
     current_squad_list: list[tuple[str, str]] = []
