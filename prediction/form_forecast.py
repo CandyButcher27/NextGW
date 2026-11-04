@@ -70,6 +70,7 @@ def fixture_forecaster(
 
 
 def model_forecaster(model, schedule: dict[tuple[str, int], dict[str, list[tuple[str, bool]]]]) -> Forecaster:
+    model_for = model if callable(model) else (lambda gameweek: model)
     from prediction.predict import predict_gameweek
 
     cache: dict[tuple[str, int, int], dict[int, dict[str, float]]] = {}
@@ -98,7 +99,7 @@ def model_forecaster(model, schedule: dict[tuple[str, int], dict[str, list[tuple
             if not rows:
                 forecasts[gw] = {}
                 continue
-            predicted = predict_gameweek(model, history, pd.DataFrame(rows))
+            predicted = predict_gameweek(model_for(gameweek), history, pd.DataFrame(rows))
             forecasts[gw] = dict(zip(predicted["player_id"].astype(str), predicted["predicted_points"].astype(float)))
         return forecasts
 

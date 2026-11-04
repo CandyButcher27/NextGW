@@ -36,8 +36,16 @@ def season_forecaster(config: dict, season: str, data: pd.DataFrame):
         return oracle_forecaster(data)
     earlier = [s for s in config["train_seasons"] if s < season]
     training = pd.concat([*(load_clean_player_gw_data(season=s, auto_fetch=False) for s in earlier), data], ignore_index=True)
-    model = train_model(training, as_of_season=season, as_of_gameweek=config["start_gw"])
-    return model_forecaster(model, fixture_schedule(data))
+    every = config.get("retrain_every", 0)
+    models: dict[int, object] = {}
+
+    def model_for(gameweek: int):
+        cutoff = config["start_gw"] + ((gameweek - config["start_gw"]) // every * every if every else 0)
+        if cutoff not in models:
+            models[cutoff] = train_model(training, as_of_season=season, as_of_gameweek=cutoff)
+        return models[cutoff]
+
+    return model_forecaster(model_for, fixture_schedule(data))
 
 
 def run_season(config: dict, season: str, seed: int, data: pd.DataFrame, forecaster) -> pd.DataFrame:
