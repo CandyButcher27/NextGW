@@ -1,6 +1,7 @@
 import pandas as pd
 
-from baselines.common import active_pool, player_registry, rolling_form
+from baselines.common import active_pool, player_registry
+from prediction.form_forecast import rolling_form
 from baselines.conventional import ConventionalStrategy
 from baselines.greedy import GreedyStrategy
 from fpl.transfers import transition_fn

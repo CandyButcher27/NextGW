@@ -4,13 +4,14 @@ import tomllib
 from pathlib import Path
 
 from backtesting.experiments import run_experiment
-from baselines.common import active_pool, backtest_transition, form_forecast, player_registry
+from baselines.common import active_pool, backtest_transition, player_registry
 from baselines.conventional import ConventionalStrategy
 from baselines.greedy import GreedyStrategy
 from data import get_pre_deadline_history, load_clean_player_gw_data
 from fpl.squad import greedy_squad
 from planning.state import PlanningState
 from planning.strategy import PlannerStrategy
+from prediction.form_forecast import fixture_forecaster, fixture_schedule, form_forecast
 
 
 def main(config_path: str) -> None:
@@ -20,13 +21,14 @@ def main(config_path: str) -> None:
 
     history = get_pre_deadline_history(data, current_season=season, current_gameweek=start_gw)
     registry = player_registry(history, season)
-    expected = form_forecast(history, season, start_gw, 1)[start_gw]
+    forecaster = {"form": lambda: form_forecast, "fixture": lambda: fixture_forecaster(fixture_schedule(data))}[config["forecaster"]]()
+    expected = forecaster(history, season, start_gw, 1)[start_gw]
     squad = greedy_squad(active_pool(history, season, registry), expected, budget=config["budget"])
     initial_state = PlanningState(start_gw, squad.to_state_squad(), round(config["budget"] - squad.total_cost, 1), 1)
 
     strategies = [
-        PlannerStrategy(**config["planner"]),
-        GreedyStrategy(),
+        PlannerStrategy(forecaster=forecaster, **config["planner"]),
+        GreedyStrategy(forecaster=forecaster),
         ConventionalStrategy(),
     ]
     started = time.time()

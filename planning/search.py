@@ -101,9 +101,15 @@ class PlanningSearch:
                     f"generating transfers; missing: {missing_player_ids}"
                 )
 
+        remaining: dict[str, float] = {}
+        for gameweek, points in self.objective.point_forecasts.items():
+            if gameweek >= state.gameweek:
+                for player_id, value in points.items():
+                    remaining[player_id] = remaining.get(player_id, 0.0) + value
         return generate_candidate_plans(
             state,
             candidate_pool=self.candidate_pool,
             expected_points=self.objective.point_forecasts.get(state.gameweek, {}),
             player_registry=self.player_registry,
+            ranking_points=remaining,
         )
