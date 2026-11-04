@@ -55,3 +55,21 @@ def test_model_forecaster_uses_only_decision_history(tmp_path):
 
     blank = {key: teams for key, teams in schedule.items() if key != (SEASON, 7)}
     assert model_forecaster(model, blank)(history, SEASON, 6, 2)[7] == {}
+
+
+def test_model_forecaster_picks_model_by_decision_gameweek(tmp_path):
+    from data import get_pre_deadline_history, load_synthetic_player_gw_data
+    from prediction.form_forecast import model_forecaster
+    from prediction.train import train_model
+
+    data = load_synthetic_player_gw_data(season=SEASON, raw_dir=tmp_path / "raw", processed_dir=tmp_path / "proc", num_players=8, num_gws=10)
+    model = train_model(data, as_of_season=SEASON, as_of_gameweek=6)
+    asked = []
+
+    def provider(gameweek):
+        asked.append(gameweek)
+        return model
+
+    history = get_pre_deadline_history(data, current_season=SEASON, current_gameweek=6)
+    model_forecaster(provider, fixture_schedule(data))(history, SEASON, 6, 3)
+    assert set(asked) == {6}
