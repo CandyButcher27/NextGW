@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from backtesting.experiments import run_experiment
+from backtesting.metrics import summarize
 from baselines.common import active_pool, backtest_transition, player_registry
 from baselines.conventional import ConventionalStrategy
 from baselines.greedy import GreedyStrategy
@@ -116,6 +117,7 @@ def main(config_path: str) -> None:
     )
     print(totals.groupby(level="season").mean().T.round(0).to_string())
     print(summary.sort_values("mean_per_season", ascending=False).round(1).to_string())
+    print(summarize(results).round(2).to_string())
     print(f"{len(totals)} runs (season x squad seed), {time.time() - started:.0f}s")
 
 
