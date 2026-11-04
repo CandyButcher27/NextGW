@@ -485,3 +485,10 @@ class TestIntegrationWithPredictionFormat:
         
         assert ps.n_scenarios == 100
         assert ps.n_gameweeks == 2
+
+
+def test_generator_seeds_do_not_collide_across_players():
+    dist = create_simple_gaussian(3.0, 2.0)
+    a = ScenarioGenerator(seed=0).from_distributions({(1, 1): dist}, "s", 5)
+    b = ScenarioGenerator(seed=10000).from_distributions({(0, 1): dist}, "s", 5)
+    assert not np.array_equal(a.player_scenarios[1].scenarios, b.player_scenarios[0].scenarios)

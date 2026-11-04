@@ -225,7 +225,6 @@ class ScenarioGenerator:
             seed: Random seed for reproducibility. If None, uses random seed.
         """
         self.seed = seed
-        self._rng = np.random.default_rng(seed)
     
     def from_predictions(
         self,
@@ -322,7 +321,7 @@ class ScenarioGenerator:
                 
                 # Sample with a unique seed derived from base seed, player, and GW
                 if self.seed is not None:
-                    sample_seed = self.seed + player_id * 10000 + int(gameweeks[i])
+                    sample_seed = np.random.default_rng([self.seed, player_id, int(gameweeks[i])])
                 else:
                     sample_seed = None
                 
@@ -404,7 +403,7 @@ class ScenarioGenerator:
                 
                 # Sample with unique seed
                 if self.seed is not None:
-                    sample_seed = self.seed + player_id * 10000 + int(gameweeks[i])
+                    sample_seed = np.random.default_rng([self.seed, player_id, int(gameweeks[i])])
                 else:
                     sample_seed = None
                 
