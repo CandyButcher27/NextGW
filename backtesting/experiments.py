@@ -1,4 +1,41 @@
-"""Run several strategies over the same backtest period and record how the run was set up."""
+"""Experiment runner: run several strategies over the same backtest period.
+
+This module wraps :func:`~backtesting.simulator.simulate` to compare multiple
+strategies under identical conditions (same data slice, same initial squad,
+same scoring config) and persist the full raw results alongside metadata that
+makes the run reproducible.
+
+Outputs per run
+---------------
+``<output_dir>/<name>/results.csv``
+    One row per (strategy, gameweek) with all columns from
+    :data:`~backtesting.simulator.RESULT_COLUMNS`.  All strategies are
+    stacked in the same file so you can pivot or filter by ``strategy``.
+
+``<output_dir>/<name>/metadata.json``
+    JSON record of the data period (season, start/end GW), feature list,
+    strategy names, scoring parameters, initial state summary, and any
+    extra config dict (put seeds, model paths, and horizon settings here).
+    This makes every result file self-describing.
+
+Typical usage
+-------------
+::
+
+    results = run_experiment(
+        name="backtest/2024-25/seed0",
+        strategies=[GreedyStrategy(), ConventionalStrategy(), PlannerStrategy()],
+        data=data,
+        season="2024-25",
+        start_gw=5,
+        end_gw=38,
+        initial_state=initial_state,
+        transition_fn=backtest_transition(data, "2024-25"),
+        output_dir="results",
+        features=["form_5", "fixture_difficulty"],
+        config={"seed": 0, "horizon": 4},
+    )
+"""
 
 from __future__ import annotations
 

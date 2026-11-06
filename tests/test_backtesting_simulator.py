@@ -251,3 +251,47 @@ def test_bench_must_come_from_squad_outside_xi():
             gameweek_outcomes(make_data(), SEASON, 2),
             ScoringConfig(),
         )
+
+
+def test_free_hit_makes_all_transfers_free():
+    """FreeHit chip should produce zero hit cost even with many transfers."""
+    state = PlanningState(
+        gameweek=2,
+        squad=(("1", "MID"), ("2", "FWD"), ("3", "DEF"), ("7", "DEF"), ("8", "MID")),
+        budget=100.0,
+        free_transfers=1,
+    )
+    gw_plan = GWPlan(
+        transfers=[TransferAction("3", "4"), TransferAction("7", "5"), TransferAction("8", "6")],
+        lineup=LineupAction(["1", "2"], "2", "1"),
+        chip=ChipAction("FreeHit"),
+    )
+    result = score_gameweek(state, gw_plan, gameweek_outcomes(make_data(), SEASON, 2), ScoringConfig())
+    assert result["hits"] == 0
+    assert result["hit_cost"] == 0.0
+    assert result["chip"] == "FreeHit"
+
+
+def test_simulate_single_gameweek_returns_one_row():
+    """simulate() with start_gw == end_gw must return exactly one row."""
+    results = simulate(FixedStrategy("fixed", plan()), make_data(), SEASON, 1, 1, make_state(1), next_gw)
+    assert len(results) == 1
+    assert results.iloc[0]["gameweek"] == 1
+    assert list(results.columns) == RESULT_COLUMNS
+
+
+def test_simulate_cumulative_points_match_sum_of_gw_points():
+    """cumulative_points at the last row must equal the sum of all gw_points."""
+    results = simulate(FixedStrategy("fixed", plan()), make_data(), SEASON, 1, 4, make_state(), next_gw)
+    assert results["cumulative_points"].iloc[-1] == results["gw_points"].sum()
+
+
+def test_score_gameweek_neither_captain_nor_vice_played_gives_no_bonus():
+    """When both captain and vice-captain score 0 minutes, captain_bonus is 0."""
+    outcomes = gameweek_outcomes(make_data(), SEASON, 1)
+    # Player "3" has 0 minutes in GW1
+    gw_plan = GWPlan(transfers=[], lineup=LineupAction(["1", "3"], "3", "1"))
+    result = score_gameweek(make_state(), gw_plan, outcomes, ScoringConfig())
+    # Vice-captain "1" did play, so they receive the bonus instead
+    assert result["captain_played"] is False
+    assert result["captain_bonus"] == 1.0  # 1 pt for player "1" in GW1 * (2-1)
